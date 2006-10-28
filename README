@@ -1,0 +1,121 @@
+mgod: a mini gopher server for inetd
+
+Mgod can serve a directory structure, taking extra data from hidden files in
+each directory (called .gopher).  It can invoke external scripts or
+executables for search string processing.
+
+
+INSTALLING
+
+Compile the server by typing "make".
+Add this line to your /etc/inetd.conf:
+
+gopher    stream    tcp    nowait    nobody    /usr/sbin/tcpd    <exec>
+
+Replace <exec> with your mgod command line:
+/path/to/mgod -n server_name -r root_dir
+
+Then restart inetd.
+
+ARGUMENTS
+
+-n <servername>
+    Set server name (default 127.0.0.1). You'll need to set this to the
+    visible internet name of your server.
+
+-p <serverport>
+    Set server port (default 70).
+
+-r <rootdir>
+    Set the root directory of your content (default /var/gopher).
+
+CONTENT
+
+All normal files (that don't begin with '.') and directories under the root
+dir are served and included in the menu. You can control menu generation by
+creating a file named ".gopher" in the directory in question.
+
+This file is included in the menu before the directory listing, each line
+as an info line, unless the line begins with a special control character.
+These control characters can influence menu generation. They are:
+
+#
+    Lines beginning with # are ignored.
+
+:
+    Include the rest of the line directly in the menu. This is useful for
+    external links. For example:
+
+    :1Quux Gopher Site<TAB>gopher.quux.org<TAB>70
+
+.
+    Include the rest of the line directly in the menu; append server
+    address and port. Useful for custom internal links. For example:
+
+    .0About Us<TAB>aboutus.txt
+
+!
+    The rest of the line is interpreted as a special command.
+    These can be:
+    nolist  - disable automatic directory listing (so only the contents
+               of .gopher will be visible in the menu)
+    reverse - reverse the direction of file sorting
+    mtime   - sort by time of last modification instead of file name
+
+	For example to list files by mtime in reverse order:
+
+	!reverse
+	!mtime
+
+EXTERNAL PROCESSORS
+
+Requests beginning with the exclamation mark '!' serve as gateways to
+an external program that can use a search string to generate results.
+You can define your processors in a file named ".search".
+
+Each row in the .search file is a TAB-separated record:
+name<TAB>executable<TAB>arg1<TAB>arg2...
+
+The first two items are mandatory. They define the name under one can invoke
+the program; and the executable that is started to handle the request.
+Further (optional) items in the record are passed on to the executable as
+arguments; then the search string (if any) is added as the final argument.
+
+As an example, we can create a processor to output the first N numbers.
+This program might look like this (TAB characters are significant):
+
+#!/bin/sh
+echo "iHello $1!			"
+for((n=1;n<=$2;n++)); do
+echo "i$n			"
+done
+echo "."
+
+We'll save it in counter.sh (with chmod a+x). Then register it in .search:
+
+counter	counter.sh	World
+
+Finally, create a link in .gopher:
+
+.7First N numbers	!counter
+
+This way, if a user visits our site and clicks on the "First N numbers"
+link, they are presented with an input box. After entering "5", the output
+is:
+
+  Hello World!
+  1
+  2
+  3
+  4
+  5
+
+
+LICENSE
+
+GPL version 2.
+
+AUTHOR
+
+Mate Nagy <k-zed@hactar.net>
+
