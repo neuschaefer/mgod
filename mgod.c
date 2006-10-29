@@ -384,6 +384,8 @@ void printentry(char *e)
 		return;
 	}
 
+	mt = localtime(&stbuf.st_mtime);
+
 	if(blogmode) {
 		printf("%04d-%02d-%02d ", mt->tm_year + 1900, mt->tm_mon + 1, mt->tm_mday);
 	}
@@ -402,7 +404,6 @@ void printentry(char *e)
 		p = ctime(&stbuf.st_mtime);
 		q = strchr(p, '\n');
 		if(q) *q = 0;
-		mt = localtime(&stbuf.st_mtime);
 		
 		printf(" Mod-Date: %s <%04d%02d%02d%02d%02d%02d>\r\n",
 				p, mt->tm_year + 1900, mt->tm_mon + 1, mt->tm_mday,
