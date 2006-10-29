@@ -298,6 +298,7 @@ int managedextern = 0;
 /* file list generation properties */
 int genlist = 1;
 int listrev = 0;
+int blogmode = 0;
 
 /* print error message */
 void errormsg(const char *e)
@@ -381,6 +382,10 @@ void printentry(char *e)
 
 	} else {
 		return;
+	}
+
+	if(blogmode) {
+		printf("%04d-%02d-%02d ", mt->tm_year + 1900, mt->tm_mon + 1, mt->tm_mday);
 	}
 
 	printf("%s\t", desc);
@@ -474,6 +479,8 @@ void readdirlist(FILE *fp) {
 					listrev = 1;
 				} else if(!strcmp(cmd, "mtime")) {
 					dirsortmode = 1;
+				} else if(!strcmp(cmd, "blog")) {
+					blogmode = 1;
 				} else {
 					fputs("iInvalid !command in config\t\t\t\r\n", stdout);
 				}
