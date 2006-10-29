@@ -309,19 +309,25 @@ void errormsg(const char *e)
 }
 
 /* print directory entry */
-void printentry(const char *e)
+void printentry(char *e)
 {
 	struct stat stbuf;
 	char *ext;
 	char *p, *q;
 	node *no;
 	char *ctype = NULL;
+	char *desc;
 	struct tm *mt;
 
 	if(stat(e, &stbuf)) {
 		errormsg("can't stat file");
 		return;
 	}
+
+	desc = getalias(e);
+	if(desc) {
+		if(desc[0] == 0) return;
+	} else desc = e;
 
 	if(gopherplus)
 		fputs("+INFO: ", stdout);
@@ -377,8 +383,7 @@ void printentry(const char *e)
 		return;
 	}
 
-	p = getalias(e);
-	printf("%s\t", p ? p : e);
+	printf("%s\t", desc);
 	/* print path */
 	for(no = path; no; no=no->next)
 		printf("%s/", no->text);
@@ -533,7 +538,7 @@ void dirlist()
 }
 
 /* serve a file */
-void serve(const char *fn)
+void serve(char *fn)
 {
 	FILE *fp;
 	int r;
