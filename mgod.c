@@ -1,4 +1,4 @@
-/* mgod 0.1
+/* mgod 0.1a
  * mini gopher server for inetd
  * by Mate Nagy <k-zed@hactar.net>
  * GPL VERSION 2
@@ -312,6 +312,17 @@ void procreq(char *req)
 	if((sep = strchr(req, '\t'))) {
 		search = sep+1;
 		*sep=0;
+	}
+
+	if(!strncmp(req, "URL:", 4)) {
+		/* generate html redirect page */
+		printf("<html><head>\r\n");
+		printf("<meta http-equiv=\"refresh\" content=\"5;url=%s\"/>\r\n", req+4);
+		printf("</head><body>\r\n");
+		printf("You'll be redirected in 5 seconds to:\r\n");
+		printf("<a href=\"%s\">%s</a>\r\n", req+4, req+4);
+		printf("</body></html>\r\n");
+		exit(0);
 	}
 
 	while((sep = strchr(req, '/'))) {

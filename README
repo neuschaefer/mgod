@@ -67,6 +67,9 @@ These control characters can influence menu generation. They are:
 	!reverse
 	!mtime
 
+The server generates html redirect pages for URL:<url> style requests
+(as the wikipedia article on gopher describes).
+
 EXTERNAL PROCESSORS
 
 Requests beginning with the exclamation mark '!' serve as gateways to
