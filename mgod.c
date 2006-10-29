@@ -546,6 +546,7 @@ void serve(char *fn)
 	struct stat stbuf;
 
 	if(iteminfo) {
+		fputs("+-2\n", stdout);
 		printentry(fn);
 		return;
 	}
@@ -738,6 +739,10 @@ void procreq(char *req)
 			exit(0);
 		}
 
+		/* skip empty elements */
+		if(pathel[0] == 0)
+			continue;
+
 		if(chdir(pathel)) {
 			errormsg("file not found or chdir failed");
 			exit(0);
@@ -767,6 +772,7 @@ void procreq(char *req)
 
 		if(iteminfo) {
 			/* instead of serving, print info */
+			fputs("+-2\n", stdout);
 			printentry(req);
 			exit(0);
 		}
