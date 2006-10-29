@@ -20,6 +20,74 @@
 #include <time.h>
 #include <stdarg.h>
 
+/********************************** newhash */
+
+typedef  unsigned long int  u4;   /* unsigned 4-byte type */
+typedef  unsigned     char  u1;   /* unsigned 1-byte type */
+
+/* The mixing step */
+#define mix(a,b,c) \
+{ \
+	a=a-b;  a=a-c;  a=a^(c>>13); \
+	b=b-c;  b=b-a;  b=b^(a<<8);  \
+	c=c-a;  c=c-b;  c=c^(b>>13); \
+	a=a-b;  a=a-c;  a=a^(c>>12); \
+	b=b-c;  b=b-a;  b=b^(a<<16); \
+	c=c-a;  c=c-b;  c=c^(b>>5);  \
+	a=a-b;  a=a-c;  a=a^(c>>3);  \
+	b=b-c;  b=b-a;  b=b^(a<<10); \
+	c=c-a;  c=c-b;  c=c^(b>>15); \
+}
+
+/* The whole new hash function */
+u4 hash(k, length, initval)
+	register u1 *k;        /* the key */
+	u4           length;   /* the length of the key in bytes */
+	u4           initval;  /* the previous hash, or an arbitrary value */
+{
+	register u4 a,b,c;  /* the internal state */
+	u4          len;    /* how many key bytes still need mixing */
+
+	/* Set up the internal state */
+	len = length;
+	a = b = 0x9e3779b9;  /* the golden ratio; an arbitrary value */
+	c = initval;         /* variable initialization of internal state */
+
+	/*---------------------------------------- handle most of the key */
+	while (len >= 12)
+	{
+		a=a+(k[0]+((u4)k[1]<<8)+((u4)k[2]<<16) +((u4)k[3]<<24));
+		b=b+(k[4]+((u4)k[5]<<8)+((u4)k[6]<<16) +((u4)k[7]<<24));
+		c=c+(k[8]+((u4)k[9]<<8)+((u4)k[10]<<16)+((u4)k[11]<<24));
+		mix(a,b,c);
+		k = k+12; len = len-12;
+	}
+
+	/*------------------------------------- handle the last 11 bytes */
+	c = c+length;
+	switch(len)              /* all the case statements fall through */
+	{
+		case 11: c=c+((u4)k[10]<<24);
+		case 10: c=c+((u4)k[9]<<16);
+		case 9 : c=c+((u4)k[8]<<8);
+				 /* the first byte of c is reserved for the length */
+		case 8 : b=b+((u4)k[7]<<24);
+		case 7 : b=b+((u4)k[6]<<16);
+		case 6 : b=b+((u4)k[5]<<8);
+		case 5 : b=b+k[4];
+		case 4 : a=a+((u4)k[3]<<24);
+		case 3 : a=a+((u4)k[2]<<16);
+		case 2 : a=a+((u4)k[1]<<8);
+		case 1 : a=a+k[0];
+				 /* case 0: nothing left to add */
+	}
+	mix(a,b,c);
+	/*-------------------------------------------- report the result */
+	return c;
+}
+
+/***********************************************************************/
+
 /* size of maximum request string and config file line */
 #define REQBUF 512
 /* buffer size for file serving */
@@ -56,6 +124,116 @@ node *mkpn(const char *tx) {
 	n->text = strdup(tx);
 	n->next = NULL;
 	return n;
+}
+
+/* structure for keeping file name aliases */
+typedef struct alias alias;
+struct alias {
+	u4 nhash;
+	char *name;
+	char *value;
+
+	struct alias *left;
+	struct alias *right;
+};
+
+alias *aliases = NULL;
+
+alias *mkalias(u4 nhash, const char *name, const char *value) {
+	alias *n = (alias *) malloc(sizeof(alias));
+	if(!n) exit(1);
+
+	n->nhash = nhash;
+	n->name = strdup(name);
+	n->value = strdup(value);
+
+	n->left = NULL;
+	n->right = NULL;
+
+	return n;
+}
+
+void regalias(char *name, const char *value) {
+	alias *n;
+	u4 nhash;
+
+	if(!aliases) {
+		aliases = mkalias(hash(name, strlen(name), 0), name, value);
+		return;
+	}
+
+	n = aliases;
+	nhash = hash(name, strlen(name), 0);
+
+	for(;;) {
+		if(n->nhash == nhash) {
+			if(strcmp(n->name, name)) {
+				if(n->left) {
+					n = n->left;
+					continue;
+				}
+
+				n->left = mkalias(nhash, name, value);
+				return;
+			} else {
+				n->value = strdup(value);
+				return;
+			}
+		} else if(nhash < n->nhash) {
+			if(n->left) {
+				n = n->left;
+				continue;
+			}
+
+			n->left = mkalias(nhash, name, value);
+			return;
+		} else {
+			if(n->right) {
+				n = n->right;
+				continue;
+			}
+
+			n->right = mkalias(nhash, name, value);
+			return;
+		}
+	}
+}
+
+char * getalias(const char *name) {
+	alias *n;
+	u4 nhash;
+
+	nhash = hash(name, strlen(name), 0);
+
+	n = aliases;
+	if(!n) return NULL;
+
+	for(;;) {
+		if(n->nhash == nhash) {
+			if(strcmp(n->name, name)) {
+				if(n->left) {
+					n = n->left;
+					continue;
+				}
+
+				return NULL;
+			} else return n->value;
+		} else if(nhash < n->nhash) {
+			if(n->left) {
+				n = n->left;
+				continue;
+			}
+
+			return NULL;
+		} else {
+			if(n->right) {
+				n = n->right;
+				continue;
+			}
+
+			return NULL;
+		}
+	}
 }
 
 /* environment */
@@ -199,7 +377,8 @@ void printentry(const char *e)
 		return;
 	}
 
-	printf("%s\t", e);
+	p = getalias(e);
+	printf("%s\t", p ? p : e);
 	/* print path */
 	for(no = path; no; no=no->next)
 		printf("%s/", no->text);
@@ -296,6 +475,14 @@ void readdirlist(FILE *fp) {
 				break;
 
 			case '#':
+				break;
+
+			case '=':
+				p = strchr(buf+1, '\t');
+				if(*p) {
+					*p = 0;
+					regalias(p+1, buf+1);
+				}
 				break;
 
 			default:
