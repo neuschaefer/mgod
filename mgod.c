@@ -267,17 +267,29 @@ int dirfilter(const struct dirent *a)
 	return 1;
 }
 
+
+/* file list generation properties */
 int dirsortmode = 0;
+int genlist = 1;
+int listrev = 0;
+int blogmode = 0;
+int dirfirst = 1;
+
 
 int dirsort(const struct dirent **a, const struct dirent **b)
 {
 	struct stat abuf, bbuf;
 
+	if(stat((*a)->d_name, &abuf)) return 0;
+	if(stat((*b)->d_name, &bbuf)) return 0;
+
+	if(dirfirst) {
+		if(S_ISDIR(abuf.st_mode) && !S_ISDIR(bbuf.st_mode)) return -1;
+		if(!S_ISDIR(abuf.st_mode) && S_ISDIR(bbuf.st_mode)) return 1;
+	}
+
 	switch(dirsortmode) {
 		case 1:
-			if(stat((*a)->d_name, &abuf)) return 0;
-			if(stat((*b)->d_name, &bbuf)) return 0;
-
 			if(abuf.st_mtime < bbuf.st_mtime) return -1;
 			if(abuf.st_mtime > bbuf.st_mtime) return 1;
 
@@ -294,11 +306,6 @@ int gopherplus = 0;
 int iteminfo = 0;
 /* process external processor's output */
 int managedextern = 0;
-
-/* file list generation properties */
-int genlist = 1;
-int listrev = 0;
-int blogmode = 0;
 
 /* print error message */
 void errormsg(const char *e)
@@ -482,6 +489,8 @@ void readdirlist(FILE *fp) {
 					dirsortmode = 1;
 				} else if(!strcmp(cmd, "blog")) {
 					blogmode = 1;
+				} else if(!strcmp(cmd, "dirmixed")) {
+					dirfirst = 0;
 				} else {
 					fputs("iInvalid !command in config\t\t\t\r\n", stdout);
 				}
