@@ -446,6 +446,7 @@ void guessviews(const char *l)
 void readdirlist(FILE *fp) {
 	char buf[REQBUF];
 	char *p, *cmd;
+	node *no;
 
 	while(!feof(fp)) {
 		if(!fgets(buf, REQBUF, fp)) break;
@@ -457,6 +458,7 @@ void readdirlist(FILE *fp) {
 				{ *p = 0; break; }
 
 		switch(buf[0]) {
+			/* verbatim full link */
 			case ':':
 				if(gopherplus)
 					fputs("+INFO: ", stdout);
@@ -468,6 +470,7 @@ void readdirlist(FILE *fp) {
 				}
 				break;
 
+			/* verbatim local link */
 			case '.':
 				if(gopherplus)
 					fputs("+INFO: ", stdout);
@@ -479,6 +482,27 @@ void readdirlist(FILE *fp) {
 				}
 				break;
 
+			/* local link, with path automatically prepended */
+			case '`':
+				if(gopherplus)
+					fputs("+INFO: ", stdout);
+
+				p = strchr(buf+1, '\t');
+				if(p) {
+					*p = 0;
+					fputs(buf+1, stdout);
+					for(no = path; no; no=no->next)
+						printf("%s/", no->text);
+					printf("%s\t%s\t%d\t+\r\n", p+1, servername, serverport);
+				}
+
+				if(gopherplus) {
+					printf("+ADMIN:\r\n Admin: %s\r\n", adminstring);
+					guessviews(buf+1);
+				}
+				break;
+
+			/* special command */
 			case '!':
 				cmd = buf+1;
 				if(!strcmp(cmd, "nolist")) {
@@ -496,9 +520,11 @@ void readdirlist(FILE *fp) {
 				}
 				break;
 
+			/* comment */
 			case '#':
 				break;
 
+			/* description alias */
 			case '=':
 				p = strchr(buf+1, '\t');
 				if(*p) {
@@ -507,6 +533,7 @@ void readdirlist(FILE *fp) {
 				}
 				break;
 
+			/* info line */
 			default:
 				if(gopherplus)
 					fputs("+INFO: ", stdout);
