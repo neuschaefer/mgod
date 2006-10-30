@@ -490,7 +490,7 @@ void readdirlist(FILE *fp) {
 				p = strchr(buf+1, '\t');
 				if(p) {
 					*p = 0;
-					fputs(buf+1, stdout);
+					printf("%s\t", buf+1);
 					for(no = path; no; no=no->next)
 						printf("%s/", no->text);
 					printf("%s\t%s\t%d\t+\r\n", p+1, servername, serverport);
