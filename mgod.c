@@ -1,4 +1,4 @@
-/* mgod 0.2
+/* mgod 0.3
  * mini gopher server for inetd
  * by Mate Nagy <k-zed@hactar.net>
  * GPL VERSION 2
@@ -139,6 +139,7 @@ struct alias {
 
 alias *aliases = NULL;
 
+/* create name alias node */
 alias *mkalias(u4 nhash, const char *name, const char *value) {
 	alias *n = (alias *) malloc(sizeof(alias));
 	if(!n) exit(1);
@@ -153,6 +154,7 @@ alias *mkalias(u4 nhash, const char *name, const char *value) {
 	return n;
 }
 
+/* register name alias */
 void regalias(char *name, const char *value) {
 	alias *n;
 	u4 nhash;
@@ -199,6 +201,7 @@ void regalias(char *name, const char *value) {
 	}
 }
 
+/* retrieve alias by name */
 char * getalias(const char *name) {
 	alias *n;
 	u4 nhash;
@@ -276,6 +279,7 @@ int blogmode = 0;
 int dirfirst = 1;
 
 
+/* callback function for directory sorting */
 int dirsort(const struct dirent **a, const struct dirent **b)
 {
 	struct stat abuf, bbuf;
@@ -430,7 +434,7 @@ void guessviews(const char *l)
 		case 'g': ctype = "image/gif"; break;
 		case 'I': ctype = "image/png"; break;
 		case '0': ctype = "text/plain"; break;
-		case '1':
+		case '1': ctype = "application/gopher+-menu"; break;
 		case '7':
 				  break;
 		case 'h':
@@ -531,6 +535,17 @@ void readdirlist(FILE *fp) {
 					*p = 0;
 					regalias(p+1, buf+1);
 				}
+				break;
+
+			case '"':
+				/* verbatim info line */
+				if(gopherplus)
+					fputs("+INFO: ", stdout);
+				putchar('i');
+				fputs(buf+1, stdout);
+				fputs("\t-\t-\t-\r\n", stdout);
+				if(gopherplus)
+					printf("+ADMIN:\r\n Admin: %s\r\n", adminstring);
 				break;
 
 			/* info line */

@@ -50,6 +50,10 @@ These control characters can influence menu generation. They are:
 #
     Lines beginning with # are ignored.
 
+"
+	Use the rest as an info line (so you may have an info line beginning with
+	any special character).
+
 :
     Include the rest of the line directly in the menu. This is useful for
     external links. For example:
