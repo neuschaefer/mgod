@@ -1,4 +1,5 @@
-mgod: a mini gopher server for inetd
+mgod 0.3
+a mini gopher server for inetd
 
 Mgod can serve a directory structure, taking extra data from hidden files in
 each directory (called .gopher).  It can invoke external scripts or
