@@ -452,9 +452,15 @@ void printentry(char *e)
 		FILE *fp = fopen(e, "r");
 		if(fp) {
 			int i = 0;
+			int spccnt = 0;
 			while(!feof(fp) && i < textsummary) {
 				int c = fgetc(fp);
-				if(isspace(c)) c = ' ';
+				if(isspace(c)) {
+					c = ' ';
+					spccnt ++;
+					if(spccnt > 2) continue;
+				} else spccnt = 0;
+
 				if(isprint(c))
 					buf[i++] = c;
 			}
