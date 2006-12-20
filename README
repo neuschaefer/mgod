@@ -44,7 +44,12 @@ All normal files (that don't begin with '.') and directories under the root
 dir are served and included in the menu. You can control menu generation by
 creating a file named ".gopher" in the directory in question.
 
-This file is included in the menu before the directory listing, each line
+Along the path, every directory is checked for the existence of a file called
+".gopher.rec" (for recursive). If it exists, it's read the same way as a
+menu file. It can't contain any menu items or info lines, otherwise things
+will break. However, you can set options perfectly well.
+
+A menu file is included in the menu before the directory listing, each line
 as an info line, unless the line begins with a special control character.
 These control characters can influence menu generation. They are:
 
@@ -81,6 +86,9 @@ These control characters can influence menu generation. They are:
     dirmixed - sort directories together with files (instead of placing
                them first)
     blog     - a hack: mtime is prepended to file descriptions
+
+    summary [length] - first LENGTH (default 72) printable characters are
+                       appended after text files as a summarizing info line
 
     For example to list files by mtime in reverse order:
 

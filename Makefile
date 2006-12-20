@@ -2,7 +2,7 @@ CFLAGS+=-g -Wall
 LDFLAGS+=-g
 
 .PHONY:	all
-all:	mgod
+all:	mgod tags
 
 mgod:	mgod.c
 
@@ -11,3 +11,5 @@ clean:
 		rm -f mgod.o
 		rm -f mgod
 
+tags:
+		ctags mgod.c

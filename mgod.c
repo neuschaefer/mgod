@@ -19,6 +19,7 @@
 #include <dirent.h>
 #include <time.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 /********************************** newhash */
 
@@ -98,6 +99,9 @@ u4 hash(k, length, initval)
 
 /* name of directory listing config file */
 #define DIRLIST ".gopher"
+
+/* name of inheriting config file */
+#define INFCONFIG ".gopher.rec"
 
 /* name of list of external processors */
 #define EXTPROC ".search"
@@ -277,6 +281,7 @@ int genlist = 1;
 int listrev = 0;
 int blogmode = 0;
 int dirfirst = 1;
+int textsummary = 0;
 
 
 /* callback function for directory sorting */
@@ -320,6 +325,18 @@ void errormsg(const char *e)
 		printf("3%s\t\t\t\r\n.\r\n", e);
 }
 
+/* print info line */
+void infoline(char *str)
+{
+	if(gopherplus)
+		fputs("+INFO: ", stdout);
+	putchar('i');
+	fputs(str, stdout);
+	fputs("\t-\t-\t-\r\n", stdout);
+	if(gopherplus)
+		printf("+ADMIN:\r\n Admin: %s\r\n", adminstring);
+}
+
 /* print directory entry */
 void printentry(char *e)
 {
@@ -328,6 +345,7 @@ void printentry(char *e)
 	char *p, *q;
 	node *no;
 	char *ctype = NULL;
+	char menuchar;
 	char *desc;
 	struct tm *mt;
 
@@ -341,11 +359,8 @@ void printentry(char *e)
 		if(desc[0] == 0) return;
 	} else desc = e;
 
-	if(gopherplus)
-		fputs("+INFO: ", stdout);
-
 	if(S_ISDIR(stbuf.st_mode)) {
-		putchar('1');
+		menuchar = '1';
 	} else if(S_ISREG(stbuf.st_mode)) {
 
 		ext = strrchr(e, '.');
@@ -354,46 +369,51 @@ void printentry(char *e)
 
 			/* images */
 			if(!strcasecmp(ext, "gif")) {
-				putchar('g'); ctype="image/gif";
+				menuchar = 'g'; ctype="image/gif";
 			} else if(!strcasecmp(ext, "jpg")) {
-				putchar('I'); ctype="image/jpeg";
+				menuchar = 'I'; ctype="image/jpeg";
 			} else if(!strcasecmp(ext, "jpeg")) {
-				putchar('I'); ctype="image/jpeg";
+				menuchar = 'I'; ctype="image/jpeg";
 			} else if(!strcasecmp(ext, "jpe")) {
-				putchar('I'); ctype="image/jpeg";
+				menuchar = 'I'; ctype="image/jpeg";
 			} else if(!strcasecmp(ext, "png")) {
-				putchar('I'); ctype="image/png";
+				menuchar = 'I'; ctype="image/png";
 			} else if(!strcasecmp(ext, "bmp")) {
-				putchar('I'); ctype="image/x-ms-bmp";
+				menuchar = 'I'; ctype="image/x-ms-bmp";
 
 			/* binary formats */
 			} else if(!strcasecmp(ext, "gz")) {
-				putchar('9'); ctype="application/x-gtar";
+				menuchar = '9'; ctype="application/x-gtar";
 			} else if(!strcasecmp(ext, "tgz")) {
-				putchar('9'); ctype="application/x-gtar";
+				menuchar = '9'; ctype="application/x-gtar";
 			} else if(!strcasecmp(ext, "tar")) {
-				putchar('9'); ctype="application/x-tar";
+				menuchar = '9'; ctype="application/x-tar";
 			} else if(!strcasecmp(ext, "zip")) {
-				putchar('9'); ctype="application/zip";
+				menuchar = '9'; ctype="application/zip";
 
 			} else if(!strcasecmp(ext, "html")) {
-				putchar('h'); ctype="text/html";
+				menuchar = 'h'; ctype="text/html";
 			} else if(!strcasecmp(ext, "htm")) {
-				putchar('h'); ctype="text/html";
+				menuchar = 'h'; ctype="text/html";
 
 			} else {
-				putchar('0');
+				menuchar = '0';
 				ctype="text/plain";
 			}
 
 		} else {
-			putchar('0');
+			menuchar = '0';
 			ctype="text/plain";
 		}
 
 	} else {
 		return;
 	}
+
+	if(gopherplus)
+		fputs("+INFO: ", stdout);
+
+	putchar(menuchar);
 
 	mt = localtime(&stbuf.st_mtime);
 
@@ -424,6 +444,28 @@ void printentry(char *e)
 			printf("+VIEWS:\r\n %s: <%ldK>\r\n", ctype, stbuf.st_size / 1024);
 		}
 	}
+
+	if(textsummary > 0 && menuchar == '0') {
+		/* output text summary for plain text file */
+
+		char buf[REQBUF];
+		FILE *fp = fopen(e, "r");
+		if(fp) {
+			int i = 0;
+			while(!feof(fp) && i < textsummary) {
+				int c = fgetc(fp);
+				if(isspace(c)) c = ' ';
+				if(isprint(c))
+					buf[i++] = c;
+			}
+			buf[i] = 0;
+
+			fclose(fp);
+
+			if(i > 0) infoline(buf);
+		}
+	}
+
 }
 
 /* guess a VIEWS block from a link */
@@ -446,10 +488,52 @@ void guessviews(const char *l)
 	printf("+VIEWS:\r\n %s: <0K>\r\n", ctype);
 }
 
+#define SPECSEP " \t"
+
+/* interpret bang command */
+void speccmd(char *cmd)
+{
+	char *spec = strtok(cmd, SPECSEP);
+	if(!spec) {
+		fputs("iEmpty ! command in config\t\t\t\r\n", stdout);
+		return;
+	}
+
+	if(!strcmp(spec, "nolist")) {
+		/* don't generate file list */
+		genlist = 0;
+	} else if(!strcmp(spec, "reverse")) {
+		/* reverse sort */
+		listrev = 1;
+	} else if(!strcmp(spec, "mtime")) {
+		/* sort by mtime */
+		dirsortmode = 1;
+	} else if(!strcmp(spec, "blog")) {
+		/* include mtime before file name in menu */
+		blogmode = 1;
+	} else if(!strcmp(spec, "dirmixed")) {
+		/* consider dirs as files while sorting */
+		dirfirst = 0;
+	} else if(!strcmp(spec, "summary")) {
+		/* enable text summary */
+
+		textsummary = 72;
+
+		char *sumlen = strtok(NULL, SPECSEP);
+		if(sumlen) textsummary = atoi(sumlen);
+		if(textsummary > REQBUF-1) textsummary = REQBUF-1;
+		if(textsummary < 0) textsummary = 0;
+
+	} else {
+		fputs("iInvalid !command in config\t\t\t\r\n", stdout);
+	}
+}
+
 /* process configuration file */
-void readdirlist(FILE *fp) {
+void readdirlist(FILE *fp)
+{
 	char buf[REQBUF];
-	char *p, *cmd;
+	char *p;
 	node *no;
 
 	while(!feof(fp)) {
@@ -508,20 +592,7 @@ void readdirlist(FILE *fp) {
 
 			/* special command */
 			case '!':
-				cmd = buf+1;
-				if(!strcmp(cmd, "nolist")) {
-					genlist = 0;
-				} else if(!strcmp(cmd, "reverse")) {
-					listrev = 1;
-				} else if(!strcmp(cmd, "mtime")) {
-					dirsortmode = 1;
-				} else if(!strcmp(cmd, "blog")) {
-					blogmode = 1;
-				} else if(!strcmp(cmd, "dirmixed")) {
-					dirfirst = 0;
-				} else {
-					fputs("iInvalid !command in config\t\t\t\r\n", stdout);
-				}
+				speccmd(buf + 1);
 				break;
 
 			/* comment */
@@ -539,24 +610,12 @@ void readdirlist(FILE *fp) {
 
 			case '"':
 				/* verbatim info line */
-				if(gopherplus)
-					fputs("+INFO: ", stdout);
-				putchar('i');
-				fputs(buf+1, stdout);
-				fputs("\t-\t-\t-\r\n", stdout);
-				if(gopherplus)
-					printf("+ADMIN:\r\n Admin: %s\r\n", adminstring);
+				infoline(buf + 1);
 				break;
 
 			/* info line */
 			default:
-				if(gopherplus)
-					fputs("+INFO: ", stdout);
-				putchar('i');
-				fputs(buf, stdout);
-				fputs("\t-\t-\t-\r\n", stdout);
-				if(gopherplus)
-					printf("+ADMIN:\r\n Admin: %s\r\n", adminstring);
+				infoline(buf);
 		}
 	}
 }
@@ -787,6 +846,14 @@ void procreq(char *req)
 		exit(0);
 	}
 
+	if(!stat(INFCONFIG, &stbuf)) {
+		FILE *fp = fopen(INFCONFIG, "r");
+		if(fp) {
+			readdirlist(fp);
+			fclose(fp);
+		}
+	}
+
 	/* follow path */
 	while((sep = strchr(req, '/'))) {
 		pathel = req;
@@ -814,7 +881,16 @@ void procreq(char *req)
 		} else {
 			path = no = mkpn(pathel);
 		}
+
+		if(!stat(INFCONFIG, &stbuf)) {
+			FILE *fp = fopen(INFCONFIG, "r");
+			if(fp) {
+				readdirlist(fp);
+				fclose(fp);
+			}
+		}
 	}
+
 
 	/* final path element */
 	if(req[0]) {
