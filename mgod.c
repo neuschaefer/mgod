@@ -98,10 +98,10 @@ u4 hash(k, length, initval)
 #define MAXPROCARG 16
 
 /* name of directory listing config file */
-#define DIRLIST ".gopher"
+char DIRLIST[40] = ".gopher";
 
 /* name of inheriting config file */
-#define INFCONFIG ".gopher.rec"
+char INFCONFIG[40] = ".gopher.rec";
 
 /* name of list of external processors */
 #define EXTPROC ".search"
@@ -960,7 +960,7 @@ int main(int argc, char *argv[], char *envp[])
 	struct tm *mt;
 
 	/* process arguments */
-	while((o = getopt(argc, argv, "n:p:r:a:l:h")) != -1) {
+	while((o = getopt(argc, argv, "n:p:r:a:l:b:h")) != -1) {
 		switch(o) {
 			case 'a':
 				adminstring = strdup(optarg);
@@ -977,6 +977,11 @@ int main(int argc, char *argv[], char *envp[])
 			case 'l':
 				logfile = strdup(optarg);
 				break;
+			case 'b':
+				strcpy(DIRLIST, optarg);
+				strcpy(INFCONFIG, optarg);
+				strcat(INFCONFIG, ".rec");
+				break;
 			case '?':
 			case 'h':
 				fprintf(stderr, "mgod mini gopher server\n\n");
@@ -985,6 +990,7 @@ int main(int argc, char *argv[], char *envp[])
 				fprintf(stderr, "-r dir: set root dir (default /var/gopher)\n");
 				fprintf(stderr, "-a str: set admin string\n");
 				fprintf(stderr, "-l name: enable logging\n");
+				fprintf(stderr, "-b name: dirlist basename (default .gopher)\n");
 				exit(1);
 		}
 	}

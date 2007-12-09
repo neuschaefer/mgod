@@ -38,6 +38,9 @@ ARGUMENTS
 -l <logfile>
 	Enable logging to a file.
 
+-b <basename>
+	Use filename instead of ".gopher" (appending .rec for ".gopher.rec")
+
 CONTENT
 
 All normal files (that don't begin with '.') and directories under the root
