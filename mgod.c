@@ -713,7 +713,7 @@ void runextern(char *name, char *search)
 
 	fp = fopen(EXTPROC, "r");
 	if(!fp) {
-		errormsg("extern not found");
+		errormsg("extern definitions not found");
 		exit(0);
 	}
 
@@ -808,7 +808,7 @@ void runextern(char *name, char *search)
 	}
 
 	fclose(fp);
-	errormsg("extern not found");
+	errormsg("extern key not found");
 	exit(0);
 }
 
