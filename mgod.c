@@ -903,6 +903,11 @@ void procreq(char *req)
 		if(req[0] == '!' || req[0] == '@') {
 			/* external processor */
 			if(req[0] == '@') managedextern = 1;
+			char *p = strchr(req + 1, '?');
+			if(p) {
+				*p = 0;
+				search = p + 1;
+			}
 			runextern(req+1, search);
 		}
 
