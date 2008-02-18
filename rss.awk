@@ -13,7 +13,7 @@ BEGIN {
 	itemlimit = 16
 
 	print "<?xml version=\"1.0\"?>"
-	print "<rss version=\"2.0\">?"
+	print "<rss version=\"2.0\">"
 	print "<channel>"
 	print " <title>" title "</title>"
 	print " <link>" base "1" at "</link>"
@@ -38,4 +38,5 @@ BEGIN {
 
 END {
 	print "</channel>"
+	print "</rss>"
 }
