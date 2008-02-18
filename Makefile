@@ -2,7 +2,7 @@ CFLAGS+=-g -Wall
 LDFLAGS+=-g
 VERSION=0.4
 DISTDIR=mgod-$(VERSION)
-DISTFILES=mgod.c Makefile rss.awk README
+DISTFILES=mgod.c Makefile rss.awk README httpgate.c httpgate.cfg.h.sample
 DISTOUT=mgod-$(VERSION).tar.gz
 
 .PHONY:	all
