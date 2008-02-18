@@ -16,6 +16,7 @@ clean:
 		rm -f mgod
 		rm -rf $(DISTDIR)
 		rm -f $(DISTOUT)
+		rm -f tags
 
 tags:
 		ctags mgod.c
