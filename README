@@ -144,7 +144,7 @@ automatically handled).
 As an example, we can create a processor to output the first N numbers.
 This program might look like this:
 
-#!/bin/sh
+#!/bin/bash
 echo "Hello $1!"
 for((n=1;n<=$2;n++)); do
 echo "$n"
@@ -168,6 +168,15 @@ is:
   3
   4
   5
+
+HTTPGATE
+
+httpgate.c is a small CGI program that provides a HTTP gateway for your gopher
+content. It calls mgod directly to obtain the data.
+
+To use it, edit the header of httpgate.c for configuration (such as the path
+to the mgod executable), then compile it ("make httpgate"). Finally, set up your
+web server to use the resulting file as a CGI.
 
 LICENSE
 

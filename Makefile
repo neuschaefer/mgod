@@ -6,9 +6,9 @@ DISTFILES=mgod.c Makefile rss.awk README
 DISTOUT=mgod-$(VERSION).tar.gz
 
 .PHONY:	all
-all:	mgod tags
+all: mgod tags
 
-mgod:	mgod.c
+mgod: mgod.c
 
 .PHONY:	clean
 clean:
@@ -20,6 +20,8 @@ clean:
 
 tags:
 		ctags mgod.c
+
+httpgate: httpgate.c
 
 .PHONY: dist
 dist:
