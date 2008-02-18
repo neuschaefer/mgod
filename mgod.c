@@ -1,4 +1,4 @@
-/* mgod 0.3
+/* mgod 0.4
  * mini gopher server for inetd
  * by Mate Nagy <k-zed@hactar.net>
  * GPL VERSION 2
@@ -1025,4 +1025,3 @@ int main(int argc, char *argv[], char *envp[])
 	procreq(buf);
 	return 0;
 }
-

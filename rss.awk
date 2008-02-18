@@ -1,3 +1,8 @@
+# usage:
+# 1. edit rss settings below
+# 2. arrange for some http request to get the result of:
+# echo | /path/to/mgod <settings> | awk -f /path/to/rss.awk
+
 BEGIN {
 	FS="\t"
 
