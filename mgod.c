@@ -963,9 +963,10 @@ int main(int argc, char *argv[], char *envp[])
 	int o;
 	time_t tm;
 	struct tm *mt;
+	char *sel = NULL;
 
 	/* process arguments */
-	while((o = getopt(argc, argv, "n:p:r:a:l:b:h")) != -1) {
+	while((o = getopt(argc, argv, "n:p:r:a:l:b:hs:")) != -1) {
 		switch(o) {
 			case 'a':
 				adminstring = strdup(optarg);
@@ -987,6 +988,9 @@ int main(int argc, char *argv[], char *envp[])
 				strcpy(INFCONFIG, optarg);
 				strcat(INFCONFIG, ".rec");
 				break;
+			case 's':
+				sel = optarg;
+				break;
 			case '?':
 			case 'h':
 				fprintf(stderr, "mgod mini gopher server\n\n");
@@ -996,18 +1000,23 @@ int main(int argc, char *argv[], char *envp[])
 				fprintf(stderr, "-a str: set admin string\n");
 				fprintf(stderr, "-l name: enable logging\n");
 				fprintf(stderr, "-b name: dirlist basename (default .gopher)\n");
+				fprintf(stderr, "-s sel: use this selector instead of reading from stdin\n");
 				exit(1);
 		}
 	}
 
-	/* read request */
-	if(fgets(buf, REQBUF, stdin) == NULL) {
-		exit(1);
-	}
+	if(!sel) {
+		/* read request */
+		if(fgets(buf, REQBUF, stdin) == NULL) {
+			exit(1);
+		}
 
-	for(p=buf; *p; p++)
-		if(*p == '\r' || *p == '\n')
-			{ *p = 0; break; }
+		for(p=buf; *p; p++)
+			if(*p == '\r' || *p == '\n')
+				{ *p = 0; break; }
+
+		sel = buf;
+	}
 
 	if(chdir(rootdir)) {
 		perror("couldn't change to root dir");
@@ -1022,6 +1031,6 @@ int main(int argc, char *argv[], char *envp[])
 			buf);
 
 	genvp = envp;
-	procreq(buf);
+	procreq(sel);
 	return 0;
 }
