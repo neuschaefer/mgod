@@ -280,7 +280,7 @@ void row_url(char type, char *desc, char *url)
 		htmlprint(url);
 		printf("</link></item>");
 	} else {
-		printf("<a href=\"");
+		printf("<b>-&gt;</b> <a href=\"");
 		htmlprint(url);
 		printf("\">");
 		htmlprint(desc);
