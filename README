@@ -1,4 +1,4 @@
-mgod 0.3
+mgod 0.4
 a mini gopher server for inetd
 
 Mgod can serve a directory structure, taking extra data from hidden files in
