@@ -10,6 +10,8 @@
 #include "httpgate.cfg.h"
 
 char *search = NULL;
+int rss = 0;
+int rssgopher = 0;
 
 /* run mgod using a selector, return file descriptor to read output from */
 FILE *run_mgod(char *selector)
@@ -115,48 +117,79 @@ void urldecode(char *s)
 /* print dirlist header */
 void dirlist_head(char type, char *sel, char *srch, char *body)
 {
-	printf("<html>\n");
-	printf("<head>\n");
-	printf("<title>Gopher: ");
-	htmlprint(sel);
-	printf("</title>");
-	printf("</head>\n<body %s>\n", body ? body : "");
-	if(strcmp(home_port, "70"))
-		printf("<h1>gopher://%s:%s/%c", home_server, home_port, type);
-	else
-		printf("<h1>gopher://%s/%c", home_server, type);
-	htmlprint(sel);
+	if(rss) {
+		printf("<?xml version=\"1.0\"?>\n");
+		printf("<rss version=\"2.0\">\n");
+		printf("<channel>\n");
+		printf("<title>Gopher: ");
+		htmlprint(sel);
+		printf("</title>");
+		printf("<link>");
+		if(rssgopher) {
+			if(strcmp(home_port, "70"))
+				printf("gopher://%s:%s/%c", home_server, home_port, type);
+			else
+				printf("gopher://%s/%c", home_server, type);
+			htmlprint(sel);
+		} else {
+			htmlprint(urlbase);
+			printf("?%c", type);
+			htmlprint(sel);
+		}
+		printf("</link>");
+		printf("<generator>mgod httpgate</generator>\n");
+	} else {
+		printf("<html>\n");
+		printf("<head>\n");
+		printf("<title>Gopher: ");
+		htmlprint(sel);
+		printf("</title>");
+		printf("</head>\n<body %s>\n", body ? body : "");
+		if(strcmp(home_port, "70"))
+			printf("<h1>gopher://%s:%s/%c", home_server, home_port, type);
+		else
+			printf("<h1>gopher://%s/%c", home_server, type);
+		htmlprint(sel);
 
-	if(srch) {
-		printf(" (");
-		htmlprint(srch);
-		printf(")");
+		if(srch) {
+			printf(" (");
+			htmlprint(srch);
+			printf(")");
+		}
+
+		printf("</h1><hr>\n<pre>");
 	}
-
-	printf("</h1><hr>\n<pre>");
 }
 
 /* print dirlist footer */
 void dirlist_foot(char type, char *sel, char *srch)
 {
-	printf("</pre>\n<hr>");
-	printf("<a href=\"gopher://hactar.net/1mgod\">mgod httpgate</a>");
-	printf("</body></html>");
+	if(rss) {
+		printf("</channel></rss>");
+	} else {
+		printf("</pre>\n<hr>");
+		printf("<a href=\"gopher://hactar.net/1mgod\">mgod httpgate</a>");
+		printf("</body></html>");
+	}
 }
 
 /* print info row */
 void row_info(char *desc)
 {
-	htmlprint(desc);
-	putchar('\n');
+	if(!rss) {
+		htmlprint(desc);
+		putchar('\n');
+	}
 }
 
 /* print error row */
 void row_error(char *desc)
 {
-	printf("<b>!! ");
-	htmlprint(desc);
-	printf("</b>\n");
+	if(!rss) {
+		printf("<b>!! ");
+		htmlprint(desc);
+		printf("</b>\n");
+	}
 }
 
 /* print row prefix for type */
@@ -178,39 +211,81 @@ void typeprefix(char type)
 /* print home link row */
 void row_homelink(char type, char *desc, char *sel)
 {
-	typeprefix(type);
-	printf("<a href=\"?%c", type);
-	htmlprint(sel);
-	printf("\">");
-	htmlprint(desc);
-	printf("</a>\n");
+	if(rss) {
+		printf("<item><title>");
+		htmlprint(desc);
+		printf("</title>");
+		printf("<link>");
+		if(rssgopher) {
+			if(strcmp(home_port, "70"))
+				printf("gopher://%s:%s/%c", home_server, home_port, type);
+			else
+				printf("gopher://%s/%c", home_server, type);
+			htmlprint(sel);
+		} else {
+			htmlprint(urlbase);
+			printf("?%c", type);
+			htmlprint(sel);
+		}
+		printf("</link></item>");
+	} else {
+		typeprefix(type);
+		printf("<a href=\"?%c", type);
+		htmlprint(sel);
+		printf("\">");
+		htmlprint(desc);
+		printf("</a>\n");
+	}
 }
 
 /* print external link row */
 void row_extlink(char type, char *desc, char *sel, char *host, char *port)
 {
-	typeprefix(type);
-	printf("<a href=\"gopher://");
-	htmlprint(host);
-	if(strcmp(port, "70")) {
-		putchar(':');
-		htmlprint(port);
+	if(rss) {
+		printf("<item><title>");
+		htmlprint(desc);
+		printf("</title>");
+		printf("<link>gopher://");
+		htmlprint(host);
+		if(strcmp(port, "70")) {
+			putchar(':');
+			htmlprint(port);
+		}
+		printf("/%c", type);
+		htmlprint(sel);
+		printf("</link></item>");
+	} else {
+		typeprefix(type);
+		printf("<a href=\"gopher://");
+		htmlprint(host);
+		if(strcmp(port, "70")) {
+			putchar(':');
+			htmlprint(port);
+		}
+		printf("/%c", type);
+		htmlprint(sel);
+		printf("\">");
+		htmlprint(desc);
+		printf("</a>\n");
 	}
-	printf("/%c", type);
-	htmlprint(sel);
-	printf("\">");
-	htmlprint(desc);
-	printf("</a>\n");
 }
 
 /* print url redirect */
 void row_url(char type, char *desc, char *url)
 {
-	printf("<a href=\"");
-	htmlprint(url);
-	printf("\">");
-	htmlprint(desc);
-	printf("</a>\n");
+	if(rss) {
+		printf("<item><title>");
+		htmlprint(desc);
+		printf("</title><link>");
+		htmlprint(url);
+		printf("</link></item>");
+	} else {
+		printf("<a href=\"");
+		htmlprint(url);
+		printf("\">");
+		htmlprint(desc);
+		printf("</a>\n");
+	}
 }
 
 /* output a directory list for a selector */
@@ -218,7 +293,10 @@ void do_dirlist(char type, char *sel)
 {
 	char line[512];
 
-	printf("Content-type: text/html\r\n\r\n");
+	if(rss)
+		printf("Content-type: application/rss+xml\n\n");
+	else
+		printf("Content-type: text/html\n\n");
 
 	FILE *fp = run_mgod(sel);
 	if(!fp) {
@@ -280,7 +358,7 @@ void do_dirlist(char type, char *sel)
 /* ask for search string */
 void do_searchform(char *sel)
 {
-	printf("Content-type: text/html\r\n\r\n");
+	printf("Content-type: text/html\n\n");
 	dirlist_head('7', sel, NULL, "onload=\"document.f.search.focus();\"");
 
 	printf("Please enter search string:\n");
@@ -306,7 +384,7 @@ void do_file(char type, char *sel)
 {
 	FILE *fp = run_mgod(sel);
 	if(!fp) {
-		printf("Content-type: text/html\r\n\r\n");
+		printf("Content-type: text/html\n\n");
 		html_error("Failed to run mgod");
 		return;
 	}
@@ -340,7 +418,7 @@ void do_file(char type, char *sel)
 		break;
 	}
 
-	printf("Content-type: %s\r\n\r\n", mime);
+	printf("Content-type: %s\n\n", mime);
 
 	char buf[2048];
 	int res;
@@ -410,6 +488,24 @@ int main(int argc, char *argv[])
 		sel = q+1;
 		type = q[0];
 		urldecode(sel);
+	}
+
+	if(type == 'r') {
+		type = '1';
+		rss = 1;
+		rssgopher = 1;
+	} else if(type == 'q') {
+		type = '7';
+		rss = 1;
+		rssgopher = 1;
+	} else if(type == 'R') {
+		type = '1';
+		rss = 1;
+		rssgopher = 0;
+	} else if(type == 'Q') {
+		type = '7';
+		rss = 1;
+		rssgopher = 0;
 	}
 
 	if(type == '7' && !search)

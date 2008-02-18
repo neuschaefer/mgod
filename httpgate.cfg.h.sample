@@ -4,3 +4,5 @@ char *home_port = "70";
 
 /* last 3 has to be "-s" "" NULL */
 char *mgod_args[] = { NULL, "-n", "hactar.net", "-r", "/path/to/gopher/root", "-l", "/path/to/gopher/log", "-s", "", NULL };
+
+char *urlbase = "http://localhost/kz/httpgate.cgi";

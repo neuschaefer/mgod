@@ -21,7 +21,8 @@ clean:
 tags:
 		ctags mgod.c
 
-httpgate: httpgate.c
+httpgate: httpgate.c httpgate.cfg.h
+		$(CC) -o httpgate httpgate.c $(CFLAGS)
 
 .PHONY: dist
 dist:
