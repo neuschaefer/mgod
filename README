@@ -174,9 +174,10 @@ HTTPGATE
 httpgate.c is a small CGI program that provides a HTTP gateway for your gopher
 content. It calls mgod directly to obtain the data.
 
-To use it, edit the header of httpgate.c for configuration (such as the path
-to the mgod executable), then compile it ("make httpgate"). Finally, set up your
-web server to use the resulting file as a CGI.
+To use it, copy httpgate.cfg.h.sample to httpgate.cfg.h, and edit it for
+configuration (such as the path to the mgod executable). Then compile httpgate
+("make httpgate"). Finally, set up your web server to use the resulting file
+as a CGI.
 
 LICENSE
 

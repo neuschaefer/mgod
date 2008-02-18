@@ -7,15 +7,7 @@
 #include <sys/wait.h>
 
 /* settings: */
-char *mgod_exec = "./mgod";
-char *home_server = "hactar.net";
-char *home_port = "70";
-
-/* last 3 has to be "-s" "" NULL */
-char *mgod_args[] = { NULL, "-n", "hactar.net", "-r", "/home/kzed", "-s", "", NULL };
-
-/* /settings */
-
+#include "httpgate.cfg.h"
 
 char *search = NULL;
 
@@ -121,14 +113,14 @@ void urldecode(char *s)
 }
 
 /* print dirlist header */
-void dirlist_head(char type, char *sel, char *srch)
+void dirlist_head(char type, char *sel, char *srch, char *body)
 {
 	printf("<html>\n");
 	printf("<head>\n");
 	printf("<title>Gopher: ");
 	htmlprint(sel);
 	printf("</title>");
-	printf("</head>\n<body>\n");
+	printf("</head>\n<body %s>\n", body ? body : "");
 	if(strcmp(home_port, "70"))
 		printf("<h1>gopher://%s:%s/%c", home_server, home_port, type);
 	else
@@ -234,7 +226,7 @@ void do_dirlist(char type, char *sel)
 		return;
 	}
 
-	dirlist_head(type, sel, search);
+	dirlist_head(type, sel, search, NULL);
 
 	while(fgets(line, 512, fp)) {
 		char type = line[0];
@@ -273,7 +265,7 @@ void do_dirlist(char type, char *sel)
 		else if(type == '3')
 			row_error(desc);
 		else if(!strncmp("URL:", s, 4))
-			row_url(type, desc, s);
+			row_url(type, desc, s + 4);
 		else if(!strcmp(host, home_server) && !strcmp(port, home_port))
 			row_homelink(type, desc, s);
 		else
@@ -289,10 +281,10 @@ void do_dirlist(char type, char *sel)
 void do_searchform(char *sel)
 {
 	printf("Content-type: text/html\r\n\r\n");
-	dirlist_head('7', sel, NULL);
+	dirlist_head('7', sel, NULL, "onload=\"document.f.search.focus();\"");
 
 	printf("Please enter search string:\n");
-	printf("<form method=GET><input type=\"hidden\" name=\"sel\" value=\"7");
+	printf("<form name=f method=GET><input type=\"hidden\" name=\"sel\" value=\"7");
 	htmlprint(sel);
 	printf("\"><input name=\"search\" size=\"40\">\n");
 	printf("<input type=\"submit\" value=\"Search\"></form>");
