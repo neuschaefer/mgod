@@ -91,6 +91,7 @@ These control characters can influence menu generation. They are:
     blog     - a hack: mtime is prepended to file descriptions
     include <file> - read file as a control file
     proc <command> - execute command, interpret output as control file
+	limit [num]    - limit directory lists to n entries (def 20)
 
     summary [length] - first LENGTH (default 72) printable characters are
                        appended after text files as a summarizing info line

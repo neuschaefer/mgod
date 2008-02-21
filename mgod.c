@@ -113,6 +113,8 @@ char * rootdir = "/var/gopher";
 char * adminstring = "Frodo Gophermeister <fng@bogus.edu>";
 char * logfile = NULL;
 
+int limit = -1;
+
 /* structure for keeping current path */
 typedef struct node node;
 struct node {
@@ -532,9 +534,13 @@ void speccmd(char *cmd)
 		if(sumlen) textsummary = atoi(sumlen);
 		if(textsummary > REQBUF-1) textsummary = REQBUF-1;
 		if(textsummary < 0) textsummary = 0;
+	} else if(!strcmp(spec, "limit")) {
+		/* limit number of directory list entries */
+		char *slimit = strtok(NULL, SPECSEP);
+		if(slimit) limit = atoi(slimit); else limit = 20;
 	} else if(!strcmp(spec, "include")) {
 		/* include .gopher file */
-		
+
 		char *file = strtok(NULL, "");
 		if(!file) {
 			fputs("i!include without arg in config\t\t\t\r\n", stdout);
@@ -678,9 +684,15 @@ void dirlist()
 		}
 
 		if(listrev) {
-			while(n--)
+			while(n--) {
+				if(limit > -1) {
+					if(limit == 0) break;
+					limit --;
+				}
 				printentry(namelist[n]->d_name);
+			}
 		} else {
+			if(limit > -1) n = limit;
 			for(i=0; i<n; i++)
 				printentry(namelist[i]->d_name);
 		}
