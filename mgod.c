@@ -496,6 +496,9 @@ void guessviews(const char *l)
 
 #define SPECSEP " \t"
 
+void readdirlist(FILE *fp);
+void runextern(char *ext);
+
 /* interpret bang command */
 void speccmd(char *cmd)
 {
@@ -529,7 +532,30 @@ void speccmd(char *cmd)
 		if(sumlen) textsummary = atoi(sumlen);
 		if(textsummary > REQBUF-1) textsummary = REQBUF-1;
 		if(textsummary < 0) textsummary = 0;
+	} else if(!strcmp(spec, "include")) {
+		/* include .gopher file */
+		
+		char *file = strtok(NULL, "");
+		if(!file) {
+			fputs("i!include without arg in config\t\t\t\r\n", stdout);
+			return;
+		}
+		FILE *fp = fopen(file, "r");
+		if(!fp) {
+			fputs("ican't open !include file\t\t\t\r\n", stdout);
+			return;
+		}
+		readdirlist(fp);
+		fclose(fp);
+	} else if(!strcmp(spec, "proc")) {
+		/* include output from external processor */
 
+		char *ext = strtok(NULL, "");
+		if(!ext) {
+			fputs("i!proc without arg in config\t\t\t\r\n", stdout);
+			return;
+		}
+		runextern(ext);
 	} else {
 		fputs("iInvalid !command in config\t\t\t\r\n", stdout);
 	}
@@ -697,8 +723,20 @@ void serve(char *fn)
 	fclose(fp);
 }
 
-/* try to run an external processor */
-void runextern(char *name, char *search)
+/* try to run/include an external processor */
+void runextern(char *cmd)
+{
+	FILE *fp = popen(cmd, "r");
+	if(!fp) {
+		errormsg("popen failed for runextern");
+		exit(0);
+	}
+	readdirlist(fp);
+	pclose(fp);
+}
+
+/* try to run a search processor */
+void runsearch(char *name, char *search)
 {
 	FILE *fp;
 	FILE *fp2;
@@ -908,7 +946,7 @@ void procreq(char *req)
 				*p = 0;
 				search = p + 1;
 			}
-			runextern(req+1, search);
+			runsearch(req+1, search);
 		}
 
 		if(stat(req, &stbuf)) {
