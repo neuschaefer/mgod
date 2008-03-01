@@ -1,6 +1,6 @@
 CFLAGS+=-g -Wall
 LDFLAGS+=-g
-VERSION=0.4
+VERSION=0.5
 DISTDIR=mgod-$(VERSION)
 DISTFILES=mgod.c Makefile README httpgate.c httpgate.cfg.h.sample
 DISTOUT=mgod-$(VERSION).tar.gz

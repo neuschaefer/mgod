@@ -1,4 +1,4 @@
-/* mgod 0.4
+/* mgod 0.5
  * mini gopher server for inetd
  * by Mate Nagy <k-zed@hactar.net>
  * GPL VERSION 2
@@ -20,6 +20,8 @@
 #include <time.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 /********************************** newhash */
 
@@ -1075,9 +1077,17 @@ int main(int argc, char *argv[], char *envp[])
 
 	tm = time(NULL);
 	mt = localtime(&tm);
-	logprintf("REQ %04d-%02d-%02d %02d:%02d:%02d '%s'\n",
+
+	struct sockaddr_in addr;
+	socklen_t i = sizeof(addr);
+	int r = getpeername(0, (struct sockaddr *) &addr, &i);
+	char *peer = "unknown";
+	if(r == 0)
+		peer = inet_ntoa(addr.sin_addr);
+
+	logprintf("REQ\t%04d-%02d-%02d %02d:%02d:%02d\t%s\t%s\n",
 			mt->tm_year + 1900, mt->tm_mon + 1, mt->tm_mday,
-			mt->tm_hour, mt->tm_min, mt->tm_sec,
+			mt->tm_hour, mt->tm_min, mt->tm_sec, peer,
 			buf);
 
 	genvp = envp;
