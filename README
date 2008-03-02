@@ -32,14 +32,14 @@ ARGUMENTS
     Set the root directory of your content (default /var/gopher).
 
 -a <adminstring>
-	Set administrator string.
-	Should be like "Name <email>"
+    Set administrator string.
+    Should be like "Name <email>"
 
 -l <logfile>
-	Enable logging to a file.
+    Enable logging to a file.
 
 -b <basename>
-	Use filename instead of ".gopher" (appending .rec for ".gopher.rec")
+    Use filename instead of ".gopher" (appending .rec for ".gopher.rec")
 
 CONTENT
 
@@ -60,8 +60,8 @@ These control characters can influence menu generation. They are:
     Lines beginning with # are ignored.
 
 "
-	Use the rest as an info line (so you may have an info line beginning with
-	any special character).
+    Use the rest as an info line (so you may have an info line beginning with
+    any special character).
 
 :
     Include the rest of the line directly in the menu. This is useful for
@@ -91,7 +91,7 @@ These control characters can influence menu generation. They are:
     blog     - a hack: mtime is prepended to file descriptions
     include <file> - read file as a control file
     proc <command> - execute command, interpret output as control file
-	limit [num]    - limit directory lists to n entries (def 20)
+    limit [num]    - limit directory lists to n entries (def 20)
 
     summary [length] - first LENGTH (default 72) printable characters are
                        appended after text files as a summarizing info line
