@@ -1036,6 +1036,10 @@ void procreq(char *req)
 						errormsg("can't open file");
 						exit(0);
 					}
+
+					if(gopherplus)
+						fputs("+-2\r\n", stdout);
+
 					readdirlist(fp);
 					fclose(fp);
 					exit(0);
