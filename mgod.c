@@ -106,7 +106,12 @@ char DIRLIST[40] = ".gopher";
 char INFCONFIG[40] = ".gopher.rec";
 
 /* name of list of external processors */
+#ifndef EXTPROC
 #define EXTPROC ".search"
+#endif
+
+/* dirlist file extension */
+#define DIRLISTEXT "g"
 
 /* default server settings */
 char * servername = "127.0.0.1";
@@ -345,7 +350,7 @@ void infoline(char *str)
 void printentry(char *e)
 {
 	struct stat stbuf;
-	char *ext;
+	char *ext = NULL;
 	char *p, *q;
 	node *no;
 	char *ctype = NULL;
@@ -358,11 +363,7 @@ void printentry(char *e)
 		return;
 	}
 
-	desc = getalias(e);
-	if(desc) {
-		if(desc[0] == 0) return;
-	} else desc = e;
-
+	/* determine menu char */
 	if(S_ISDIR(stbuf.st_mode)) {
 		menuchar = '1';
 	} else if(S_ISREG(stbuf.st_mode)) {
@@ -394,12 +395,15 @@ void printentry(char *e)
 				menuchar = '9'; ctype="application/x-tar";
 			} else if(!strcasecmp(ext, "zip")) {
 				menuchar = '9'; ctype="application/zip";
-
+			} else if(!strcasecmp(ext, "pdf")) {
+				menuchar = '9'; ctype="application/pdf";
 			} else if(!strcasecmp(ext, "html")) {
 				menuchar = 'h'; ctype="text/html";
 			} else if(!strcasecmp(ext, "htm")) {
 				menuchar = 'h'; ctype="text/html";
 
+			} else if(!strcasecmp(ext, DIRLISTEXT)) {
+				menuchar = '1';
 			} else {
 				menuchar = '0';
 				ctype="text/plain";
@@ -414,6 +418,24 @@ void printentry(char *e)
 		return;
 	}
 
+	/* whether we're cutting off the .g ... */
+	int dotg = 0;
+
+	/* determine description */
+	desc = getalias(e);
+	if(desc) {
+		if(desc[0] == 0) return;
+	} else {
+		desc = e;
+
+		/* cut off .g from extension */
+		if(menuchar == '1' && ext && !strcasecmp(ext, "g")) {
+			dotg = 1;
+			ext --;
+			*ext = 0;
+		}
+	}
+
 	if(gopherplus)
 		fputs("+INFO: ", stdout);
 
@@ -426,6 +448,12 @@ void printentry(char *e)
 	}
 
 	printf("%s\t", desc);
+
+	if(dotg) {
+		/* replace dot in the .g */
+		*ext = '.';
+	}
+
 	/* print path */
 	for(no = path; no; no=no->next)
 		printf("%s/", no->text);
@@ -488,7 +516,7 @@ void guessviews(const char *l)
 		case '0': ctype = "text/plain"; break;
 		case '1': ctype = "application/gopher+-menu"; break;
 		case '7':
-				  break;
+			return;
 		case 'h':
 				  ctype = "text/html"; break;
 		default:
@@ -996,6 +1024,24 @@ void procreq(char *req)
 
 		if(S_ISREG(stbuf.st_mode)) {
 			/* serve file */
+
+			char *ext;
+			ext = strrchr(req, '.');
+			if(ext) {
+				ext++;
+				if(!strcasecmp(ext, DIRLISTEXT)) {
+					/* serve dirlist file */
+					FILE *fp = fopen(req, "r");
+					if(!fp) {
+						errormsg("can't open file");
+						exit(0);
+					}
+					readdirlist(fp);
+					fclose(fp);
+					exit(0);
+				}
+			}
+
 			serve(req);
 			exit(0);
 		}
