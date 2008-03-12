@@ -1,0 +1,89 @@
+
+
+(defstruct month hits dayhits)
+(setq monthdict (make-dictionary))
+
+(setq hostdict (make-dictionary))
+(setq seldict (make-dictionary))
+
+
+(defun anal (fulldate host sel)
+  (grab (date tm) (explode " " fulldate))
+  (grab (year month day) (explode "-" date))
+  (setq mon (+ year "-" month))
+
+  (or (setq en (dref monthdict mon))
+      (begin
+        (setq en (make-month 0 (make-dictionary)))
+        (setf (dref monthdict mon) en)))
+
+  (incf (month-hits en))
+
+  (setf (dref (month-dayhits en) day)
+        (1+ (or (dref (month-dayhits en) day) 0)))
+
+  (setf (dref hostdict host)
+        (1+ (or (dref hostdict host) 0)))
+
+  (setf (dref seldict sel)
+        (1+ (or (dref seldict sel) 0))))
+
+
+(defun dictass (dct)
+  (mapcar (fn (k)
+            (cons k (dref dct k)))
+          (dictionary-keys dct)))
+
+(defun assort (ass)
+  (sort ass (fn (a b) (> (cdr a) (cdr b)))))
+
+(defun numpad (s l (p " "))
+  (setq s (->str s))
+  (setq sl (length s))
+  (if (< sl l)
+    (+ (* p (- l sl)) s)
+    s))
+
+(defun rpad (s l (p " "))
+  (setq s (->str s))
+  (setq sl (length s))
+  (if (< sl l)
+    (+ s (* p (- l sl)))
+    s))
+
+(defun topsel ((n 10))
+  (setq sels (assort (dictass seldict)))
+  (setq nsels (length sels))
+  (if (> nsels n)
+    (set! nsels n))
+
+  (princln "Top" nsels "selectors:")
+
+  (loop for s in sels
+        for n from 1 to nsels
+        (princ- (numpad n 2) ". " (numpad (cdr s) 4) "  " (car s) "\n")))
+
+(defun tophosts ((n 10))
+  (setq hosts (assort (dictass hostdict)))
+  (setq nhosts (length hosts))
+  (if (> nhosts n)
+    (set! nhosts n))
+
+  (princln "Top" nhosts "hosts:")
+
+  (loop for s in hosts
+        for n from 1 to nhosts
+        (princ- (numpad n 2) ". " (numpad (cdr s) 4) "  " (car s) "\n")))
+
+
+
+
+(loop for ln = (read-line)
+      until (eofp ln)
+      (grab (lntype date host sel) (explode "\t" ln))
+      (when (eql lntype "REQ")
+        (anal date host sel)))
+
+(topsel)
+(princln)
+(tophosts)
