@@ -106,8 +106,20 @@
 
   (nextline)
 
+  (display "\nMonthly hits:\n")
+  (table-print
+    '(l r)
 
-  (display "Top selectors:\n")
+    (map (lambda (month)
+           (list
+             month
+             (number->string
+               (month-entry-hits (hash-table-get month-hash month)))))
+         (list-sort
+           (lambda (a b) (string<? a b))
+           (hash-table-map month-hash (lambda (k v) k)))))
+
+  (display "\nTop selectors:\n")
   (place-table (hash-top selector-hash 20))
   (display "\nTop hosts:\n")
 
@@ -125,18 +137,4 @@
                      (dns-get-name dns (car row)))))
            (s1:iota (length top))
            top)))
-
-  (display "\nMonthly hits:\n")
-  (table-print
-    '(l r)
-
-    (map (lambda (month)
-           (list
-             month
-             (number->string
-               (month-entry-hits (hash-table-get month-hash month)))))
-         (list-sort
-           (lambda (a b) (string<? a b))
-           (hash-table-map month-hash (lambda (k v) k)))))
-
   )
