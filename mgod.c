@@ -1066,9 +1066,10 @@ int main(int argc, char *argv[], char *envp[])
 	time_t tm;
 	struct tm *mt;
 	char *sel = NULL;
+	char *peer = NULL;
 
 	/* process arguments */
-	while((o = getopt(argc, argv, "n:p:r:a:l:b:hs:")) != -1) {
+	while((o = getopt(argc, argv, "n:p:r:a:l:b:hs:P:")) != -1) {
 		switch(o) {
 			case 'a':
 				adminstring = strdup(optarg);
@@ -1092,6 +1093,9 @@ int main(int argc, char *argv[], char *envp[])
 				break;
 			case 's':
 				sel = optarg;
+				break;
+			case 'P':
+				peer = optarg;
 				break;
 			case '?':
 			case 'h':
@@ -1128,12 +1132,15 @@ int main(int argc, char *argv[], char *envp[])
 	tm = time(NULL);
 	mt = localtime(&tm);
 
-	struct sockaddr_in addr;
-	socklen_t i = sizeof(addr);
-	int r = getpeername(0, (struct sockaddr *) &addr, &i);
-	char *peer = "unknown";
-	if(r == 0)
-		peer = inet_ntoa(addr.sin_addr);
+	if(!peer) {
+		struct sockaddr_in addr;
+		socklen_t i = sizeof(addr);
+		int r = getpeername(0, (struct sockaddr *) &addr, &i);
+		if(r == 0)
+			peer = inet_ntoa(addr.sin_addr);
+		else
+			peer = "unknown";
+	}
 
 	logprintf("REQ\t%04d-%02d-%02d %02d:%02d:%02d\t%s\t%s\n",
 			mt->tm_year + 1900, mt->tm_mon + 1, mt->tm_mday,
