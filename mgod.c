@@ -1,6 +1,6 @@
 /* mgod 0.5
  * mini gopher server for inetd
- * by Mate Nagy <k-zed@hactar.net>
+ * by Mate Nagy <mnagy@port70.net>
  * GPL VERSION 2
  */
 

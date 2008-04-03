@@ -168,7 +168,7 @@ void dirlist_foot(char type, char *sel, char *srch)
 		printf("</channel></rss>");
 	} else {
 		printf("</pre>\n<hr>");
-		printf("<a href=\"gopher://hactar.net/1mgod\">mgod httpgate</a>");
+		printf("<a href=\"gopher://port70.net/1mgod\">mgod httpgate</a>");
 		printf("</body></html>");
 	}
 }
