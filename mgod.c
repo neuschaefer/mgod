@@ -403,6 +403,8 @@ void printentry(char *e)
 				menuchar = '9'; ctype="video/mpeg";
 			} else if(!strcasecmp(ext, "avi")) {
 				menuchar = '9'; ctype="video/x-msvideo";
+			} else if(!strcasecmp(ext, "swf")) {
+				menuchar = '9'; ctype="application/x-shockwave-flash";
 			} else if(!strcasecmp(ext, "html")) {
 				menuchar = 'h'; ctype="text/html";
 			} else if(!strcasecmp(ext, "htm")) {
