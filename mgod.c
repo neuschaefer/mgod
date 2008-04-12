@@ -397,6 +397,12 @@ void printentry(char *e)
 				menuchar = '9'; ctype="application/zip";
 			} else if(!strcasecmp(ext, "pdf")) {
 				menuchar = '9'; ctype="application/pdf";
+			} else if(!strcasecmp(ext, "mp4")) {
+				menuchar = '9'; ctype="video/mp4";
+			} else if(!strcasecmp(ext, "mpg")) {
+				menuchar = '9'; ctype="video/mpeg";
+			} else if(!strcasecmp(ext, "avi")) {
+				menuchar = '9'; ctype="video/x-msvideo";
 			} else if(!strcasecmp(ext, "html")) {
 				menuchar = 'h'; ctype="text/html";
 			} else if(!strcasecmp(ext, "htm")) {
