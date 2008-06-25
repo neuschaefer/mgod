@@ -130,11 +130,13 @@ void dirlist_head(char type, char *sel, char *srch, char *body)
 				printf("gopher://%s:%s/%c", home_server, home_port, type);
 			else
 				printf("gopher://%s/%c", home_server, type);
-			htmlprint(sel);
+			urlprint(sel);
+			//htmlprint(sel);
 		} else {
 			htmlprint(urlbase);
 			printf("?%c", type);
-			htmlprint(sel);
+			urlprint(sel);
+			//htmlprint(sel);
 		}
 		printf("</link>");
 		printf("<generator>mgod httpgate</generator>\n");
@@ -149,7 +151,8 @@ void dirlist_head(char type, char *sel, char *srch, char *body)
 			printf("<h1>gopher://%s:%s/%c", home_server, home_port, type);
 		else
 			printf("<h1>gopher://%s/%c", home_server, type);
-		htmlprint(sel);
+		urlprint(sel);
+		//htmlprint(sel);
 
 		if(srch) {
 			printf(" (");
@@ -221,17 +224,20 @@ void row_homelink(char type, char *desc, char *sel)
 				printf("gopher://%s:%s/%c", home_server, home_port, type);
 			else
 				printf("gopher://%s/%c", home_server, type);
-			htmlprint(sel);
+			urlprint(sel);
+			//htmlprint(sel);
 		} else {
 			htmlprint(urlbase);
 			printf("?%c", type);
-			htmlprint(sel);
+			urlprint(sel);
+			//htmlprint(sel);
 		}
 		printf("</link></item>");
 	} else {
 		typeprefix(type);
 		printf("<a href=\"?%c", type);
-		htmlprint(sel);
+		urlprint(sel);
+		//htmlprint(sel);
 		printf("\">");
 		htmlprint(desc);
 		printf("</a>\n");
@@ -252,7 +258,8 @@ void row_extlink(char type, char *desc, char *sel, char *host, char *port)
 			htmlprint(port);
 		}
 		printf("/%c", type);
-		htmlprint(sel);
+		urlprint(sel);
+		//htmlprint(sel);
 		printf("</link></item>");
 	} else {
 		typeprefix(type);
@@ -263,7 +270,8 @@ void row_extlink(char type, char *desc, char *sel, char *host, char *port)
 			htmlprint(port);
 		}
 		printf("/%c", type);
-		htmlprint(sel);
+		urlprint(sel);
+//		htmlprint(sel);
 		printf("\">");
 		htmlprint(desc);
 		printf("</a>\n");
@@ -277,11 +285,13 @@ void row_url(char type, char *desc, char *url)
 		printf("<item><title>");
 		htmlprint(desc);
 		printf("</title><link>");
-		htmlprint(url);
+		urlprint(url);
+		//htmlprint(url);
 		printf("</link></item>");
 	} else {
 		printf("<b>-&gt;</b> <a href=\"");
-		htmlprint(url);
+		urlprint(url);
+	//	htmlprint(url);
 		printf("\">");
 		htmlprint(desc);
 		printf("</a>\n");
