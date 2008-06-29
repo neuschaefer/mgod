@@ -285,13 +285,13 @@ void row_url(char type, char *desc, char *url)
 		printf("<item><title>");
 		htmlprint(desc);
 		printf("</title><link>");
-		urlprint(url);
-		//htmlprint(url);
+		//urlprint(url);
+		htmlprint(url);
 		printf("</link></item>");
 	} else {
 		printf("<b>-&gt;</b> <a href=\"");
-		urlprint(url);
-	//	htmlprint(url);
+	//	urlprint(url);
+		htmlprint(url);
 		printf("\">");
 		htmlprint(desc);
 		printf("</a>\n");
