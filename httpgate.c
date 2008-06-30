@@ -83,7 +83,7 @@ void urlprint(char *s)
 	char *p;
 	for(p = s; *p; p++) {
 		if(isalpha(*p) || isdigit(*p) || *p == '-' || *p == '_'
-				|| *p == '.' || *p == '~')
+				|| *p == '.' || *p == '~' || *p == '/')
 			putchar(*p);
 		else printf("%%%02x", *p);
 	}
