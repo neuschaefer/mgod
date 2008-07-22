@@ -53,8 +53,27 @@ menu file. It can't contain any menu items or info lines, otherwise things
 will break. However, you can set options perfectly well.
 
 A menu file is included in the menu before the directory listing, each line
-as an info line, unless the line begins with a special control character.
-These control characters can influence menu generation. They are:
+as an info line, unless the line begins with a special control character,
+or the line contains one or more tab characters.
+
+If the line contains tab characters, but no special control character at
+the beginning, it is interpreted as a gopher menu line:
+    info<TAB>selector<TAB>host<TAB>port
+
+If 'port' is skipped, but 'host' is specified, 70 is filled in as port.
+If both 'host' and 'port' is skipped, the line is considered 'local';
+configured server host and port are filled in.
+
+For local lines, if the selector doesn't begin with '/' or 'URL:', the
+current path is prepended. If the selector begins with '/', it is considered
+an absolute path (current path is not prepended, but the beginning '/' is
+cut off).
+
+If the info field is empty, but the selector is specified, the directory entry
+printing mechanism is invoked on the selector (unless it begins with 'URL:',
+in which case the info field is filled in by the URL itself).
+
+Special control characters (at the beginning of a line):
 
 #
     Lines beginning with # are ignored.
@@ -77,7 +96,7 @@ These control characters can influence menu generation. They are:
 
 `
     Works like ".", except the current path is prepended to the link.
-    (So this is more useful.)
+    (Useful for relative links.)
 
 !
     The rest of the line is interpreted as a special command.

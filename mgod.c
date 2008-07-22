@@ -358,7 +358,18 @@ void printentry(char *e)
 	char *desc;
 	struct tm *mt;
 
-	if(stat(e, &stbuf)) {
+	char *fil = e; // file system name
+	int absolute = 0;
+
+	if(e[0] == '/') {
+		/* when given an absolute path, prepend server root... */
+		fil = (char *) alloca(strlen(rootdir) + strlen(e));
+		sprintf(fil, "%s%s", rootdir, e);
+		absolute = 1;
+		e ++;
+	}
+
+	if(stat(fil, &stbuf)) {
 		errormsg("can't stat file");
 		return;
 	}
@@ -462,9 +473,11 @@ void printentry(char *e)
 		*ext = '.';
 	}
 
-	/* print path */
-	for(no = path; no; no=no->next)
-		printf("%s/", no->text);
+	if(!absolute) {
+		/* print path */
+		for(no = path; no; no=no->next)
+			printf("%s/", no->text);
+	}
 
 	printf("%s\t%s\t%d\t+\r\n", e, servername, serverport);
 
@@ -489,7 +502,7 @@ void printentry(char *e)
 		/* output text summary for plain text file */
 
 		char buf[REQBUF];
-		FILE *fp = fopen(e, "r");
+		FILE *fp = fopen(fil, "r");
 		if(fp) {
 			int i = 0;
 			int spccnt = 0;
@@ -691,7 +704,63 @@ void readdirlist(FILE *fp)
 
 			/* info line */
 			default:
-				infoline(buf);
+			/* no special beginning characters.
+			 * Let's try to find tabs */
+			{
+				char *info = buf;
+				char *sel = strchr(buf, '\t');
+				char *serv = NULL;
+				char *port = NULL;
+				if(!sel) {
+					/* just an infoline after all */
+					infoline(buf);
+				} else {
+					/* has tabs; try to interpret somewhat similarly
+					 * to bucktooth (fill in missing fields) */
+
+					*sel++ = 0;
+					serv = strchr(sel, '\t');
+					if(serv) {
+						*serv++ = 0;
+						port = strchr(serv, '\t');
+						if(port) *port++ = 0;
+					}
+
+					if(!info[0]) {
+						/* missing info field */
+						if(!serv) {
+							/* if no serv specified, just do a printentry */
+							if(!strncmp(sel, "URL:", 4)) {
+								/* .. unless it begins with URL: */
+								if(gopherplus)
+									fputs("+INFO: ", stdout);
+								printf("h%s\t%s\t%s\t%d\r\n", sel+4, sel, servername, serverport);
+							} else printentry(sel);
+						} else {
+							errormsg("known selector, but no info field on nonlocal serv");
+						}
+					} else {
+						/* info is specified. */
+						if(gopherplus)
+							fputs("+INFO: ", stdout);
+						printf("%s\t", info);
+
+						if(!serv && sel[0] != '/' && strncmp(sel, "URL:", 4)) {
+							/* selector is relative and serv is local, print path */
+							for(no = path; no; no=no->next)
+								printf("%s/", no->text);
+						}
+						if(sel[0] == '/') sel ++;
+						printf("%s\t%s\t%d%s\r\n", sel, serv ? serv : servername,
+							port ? atoi(port) : (serv ? 70 : serverport),
+							serv ? "" : "\t+");
+						if(gopherplus) {
+							printf("+ADMIN:\r\n Admin: %s\r\n", adminstring);
+							guessviews(info);
+						}
+					}
+				}
+			}
 		}
 	}
 }
