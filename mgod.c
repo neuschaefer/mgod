@@ -139,6 +139,51 @@ node *mkpn(const char *tx) {
 	return n;
 }
 
+/* structure for keeping directory processors */
+typedef struct dirproc dirproc;
+struct dirproc {
+	char *name;
+	char *cmd;
+	int raw;
+	dirproc *next;
+};
+
+dirproc *dirprocs = NULL;
+
+/* record a directory processor */
+void adddirproc(char *name, char *cmd)
+{
+	dirproc *n = (dirproc *) malloc(sizeof(dirproc));
+	n->name = strdup(name);
+	n->cmd = strdup(cmd);
+	n->next = dirprocs;
+	n->raw = 0;
+	dirprocs = n;
+}
+
+/* look up dirproc command by name */
+dirproc *getdirproc(char *name)
+{
+	dirproc *n;
+	for(n = dirprocs; n; n=n->next) {
+		if(!strcmp(n->name, name)) return n;
+	}
+	return NULL;
+}
+
+/* empty the list of dirprocs */
+void cleardirprocs()
+{
+	dirproc *n, *m = NULL;
+	for(n = dirprocs; n; n = n->next) {
+		free(m);
+		free(n->name);
+		free(n->cmd);
+		m = n;
+	}
+	free(m);
+}
+
 /* structure for keeping file name aliases */
 typedef struct alias alias;
 struct alias {
@@ -557,7 +602,7 @@ void speccmd(char *cmd)
 {
 	char *spec = strtok(cmd, SPECSEP);
 	if(!spec) {
-		fputs("iEmpty ! command in config\t\t\t\r\n", stdout);
+		errormsg("Empty ! command in config");
 		return;
 	}
 
@@ -594,12 +639,12 @@ void speccmd(char *cmd)
 
 		char *file = strtok(NULL, "");
 		if(!file) {
-			fputs("i!include without arg in config\t\t\t\r\n", stdout);
+			errormsg("!include without arg in config");
 			return;
 		}
 		FILE *fp = fopen(file, "r");
 		if(!fp) {
-			fputs("ican't open !include file\t\t\t\r\n", stdout);
+			errormsg("can't open !include file");
 			return;
 		}
 		readdirlist(fp);
@@ -609,12 +654,27 @@ void speccmd(char *cmd)
 
 		char *ext = strtok(NULL, "");
 		if(!ext) {
-			fputs("i!proc without arg in config\t\t\t\r\n", stdout);
+			errormsg("!proc without arg in config");
 			return;
 		}
 		runextern(ext);
+	} else if(!strcmp(spec, "dirproc") || !strcmp(spec, "dirproc-raw")) {
+		/* register directory processor */
+		char *name = strtok(NULL, SPECSEP);
+		if(!name) {
+			errormsg("!dirproc without name arg");
+			return;
+		}
+		char *cmd = strtok(NULL, "");
+		if(!cmd) {
+			errormsg("!dirproc without cmd arg");
+			return;
+		}
+		adddirproc(name, cmd);
+		if(!strcmp(spec, "dirproc-raw"))
+			dirprocs->raw = 1;
 	} else {
-		fputs("iInvalid !command in config\t\t\t\r\n", stdout);
+		errormsg("Invalid !command in config");
 	}
 }
 
@@ -854,6 +914,20 @@ void runextern(char *cmd)
 	pclose(fp);
 }
 
+/* try to run/include a directory processor */
+void rundirproc(dirproc *d, char *path)
+{
+	setenv("QUERY", path, 1);
+	if(d->raw) {
+		char *args[3] = { "sh", d->cmd, NULL };
+		execv("/bin/sh", args);
+		errormsg("execv failed");
+		exit(0);
+	} else {
+		runextern(d->cmd);
+	}
+}
+
 /* try to run a search processor */
 void runsearch(char *name, char *search)
 {
@@ -1023,6 +1097,17 @@ void procreq(char *req)
 		*sep = 0;
 		req = sep + 1;
 
+		/* check for directory processors */
+		{
+			dirproc *d = getdirproc(pathel);
+			if(d) {
+				*sep = '/';
+				rundirproc(d, pathel);
+				exit(0);
+			}
+		}
+		cleardirprocs();
+
 		if(!strcmp(pathel, "..")) {
 			errormsg("invalid path");
 			exit(0);
@@ -1057,6 +1142,15 @@ void procreq(char *req)
 
 	/* final path element */
 	if(req[0]) {
+		{
+			/* check for directory processors */
+			dirproc *d = getdirproc(req);
+			if(d) {
+				rundirproc(d, req);
+				exit(0);
+			}
+		}
+
 		if(req[0] == '!' || req[0] == '@') {
 			/* external processor */
 			if(req[0] == '@') managedextern = 1;

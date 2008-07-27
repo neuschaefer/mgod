@@ -115,6 +115,16 @@ Special control characters (at the beginning of a line):
     summary [length] - first LENGTH (default 72) printable characters are
                        appended after text files as a summarizing info line
 
+    dirproc <name> <command>
+        Put this in .gopher.rec files. Instead of serving anything below
+        subdirectory <name>, this will run <command> instead, setting
+        QUERY=<path> in the environment, and interpreting the output as a
+        control file.
+
+    dirproc-raw <name> <command>
+        The same as dirproc, but instead of interpreting the output, it is
+        passed on directly to the client.
+
     For example to list files by mtime in reverse order:
 
     !reverse
