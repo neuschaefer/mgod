@@ -320,6 +320,11 @@ void do_dirlist(char type, char *sel)
 		char type = line[0];
 		if(!type || type == '\n') continue;
 
+		char *eol = strchr(line, '\r');
+		if(eol) *eol = 0;
+		eol = strchr(line, '\n');
+		if(eol) *eol = 0;
+
 		char *p = line + 1;
 
 		/* grab next token */

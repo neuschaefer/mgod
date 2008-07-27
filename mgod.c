@@ -524,7 +524,7 @@ void printentry(char *e)
 			printf("%s/", no->text);
 	}
 
-	printf("%s\t%s\t%d\t+\r\n", e, servername, serverport);
+	printf("%s\t%s\t%d\r\n", e, servername, serverport);
 
 	if(gopherplus) {
 		/* print admin block */
@@ -700,7 +700,7 @@ void readdirlist(FILE *fp)
 				if(gopherplus)
 					fputs("+INFO: ", stdout);
 				fputs(buf+1, stdout);
-				fputs("\t+\r\n", stdout);
+				fputs("\r\n", stdout);
 				if(gopherplus) {
 					printf("+ADMIN:\r\n Admin: %s\r\n", adminstring);
 					guessviews(buf+1);
@@ -712,7 +712,7 @@ void readdirlist(FILE *fp)
 				if(gopherplus)
 					fputs("+INFO: ", stdout);
 				fputs(buf+1, stdout);
-				printf("\t%s\t%d\t+\r\n", servername, serverport);
+				printf("\t%s\t%d\r\n", servername, serverport);
 				if(gopherplus) {
 					printf("+ADMIN:\r\n Admin: %s\r\n", adminstring);
 					guessviews(buf+1);
@@ -730,7 +730,7 @@ void readdirlist(FILE *fp)
 					printf("%s\t", buf+1);
 					for(no = path; no; no=no->next)
 						printf("%s/", no->text);
-					printf("%s\t%s\t%d\t+\r\n", p+1, servername, serverport);
+					printf("%s\t%s\t%d\r\n", p+1, servername, serverport);
 				}
 
 				if(gopherplus) {
@@ -811,9 +811,8 @@ void readdirlist(FILE *fp)
 								printf("%s/", no->text);
 						}
 						if(sel[0] == '/') sel ++;
-						printf("%s\t%s\t%d%s\r\n", sel, serv ? serv : servername,
-							port ? atoi(port) : (serv ? 70 : serverport),
-							serv ? "" : "\t+");
+						printf("%s\t%s\t%d\r\n", sel, serv ? serv : servername,
+							port ? atoi(port) : (serv ? 70 : serverport));
 						if(gopherplus) {
 							printf("+ADMIN:\r\n Admin: %s\r\n", adminstring);
 							guessviews(info);
