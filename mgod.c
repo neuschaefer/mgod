@@ -182,6 +182,7 @@ void cleardirprocs()
 		m = n;
 	}
 	free(m);
+	dirprocs = NULL;
 }
 
 /* structure for keeping file name aliases */
@@ -386,7 +387,7 @@ void infoline(char *str)
 		fputs("+INFO: ", stdout);
 	putchar('i');
 	fputs(str, stdout);
-	fputs("\t-\t-\t-\r\n", stdout);
+	fputs("\tfake\t(NULL)\t0\r\n", stdout);
 	if(gopherplus)
 		printf("+ADMIN:\r\n Admin: %s\r\n", adminstring);
 }
@@ -1070,6 +1071,8 @@ void procreq(char *req)
 		else if(p[0] == '+')
 			gopherplus = 1;
 	}
+
+	if(search) setenv("SEARCH", search, 1);
 
 	if(!strncmp(req, "URL:", 4)) {
 		/* generate html redirect page */
