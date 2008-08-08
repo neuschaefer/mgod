@@ -47,14 +47,14 @@ char * logfile = NULL;
 /* file types */
 char *filetypes[] = {
 	/* images */
-	"I", "jpg jpeg jpe png bmp",
-	"g", "gif",
+	"I", ".jpg.jpeg.jpe.png.bmp.",
+	"g", ".gif.",
 	/* binary formats */
-	"9", "gz tgz tar zip bz2 rar pdf mid xm mod",
-	";", "avi mp4 mpg",
-	"a", "wav mp3 au",
+	"9", ".gz.tgz.tar.zip.bz2.rar.pdf.mid.xm.mod.",
+	";", ".avi.mp4.mpg.",
+	"a", ".wav.mp3.au.",
 	/* html */
-	"h", "htm html swf",
+	"h", ".htm.html.swf.",
 
 	/* directory list */
 	"1", DIRLISTEXT,
@@ -454,18 +454,27 @@ void printentry(char *e)
 
 		ext = strrchr(e, '.');
 		if(ext) {
-			ext++;
-
 			char **ft = filetypes;
-			for(; *ft; ft ++) {
-				char mch = *ft[0]; ft++;
-				if(strcasestr(*ft, ext)) {
-					menuchar = mch;
-					break;
+			char extwdot[8];
+
+			if(strlen(ext) > 7) {
+				menuchar = '0';
+			} else {
+				strcpy(extwdot, ext);
+				strcat(extwdot, ".");
+				for(; *ft; ft ++) {
+					char mch = *ft[0]; ft++;
+					if(strcasestr(*ft, extwdot)) {
+						menuchar = mch;
+						break;
+					}
 				}
+
+				if(!(*ft)) menuchar = '0';
+
 			}
 
-			if(!(*ft)) menuchar = '0';
+			ext ++; // skip dot
 		} else {
 			menuchar = '0';
 		}
