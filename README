@@ -10,10 +10,6 @@ each directory (called .gopher).  It can invoke external scripts or
 executables for search string processing.
 
 Gopher+ used to be supported, but support was eventually removed.
-Now, only the "$" selector argument is supported (for printing a redirect
-menu to the non-gopher+ content, like the gopher.floodgap.com server does),
-to accomodate clients that query the root menu in gopher+ mode straight
-away (UMN gopher client).
 
 
 CHANGELOG
