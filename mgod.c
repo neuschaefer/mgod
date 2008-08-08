@@ -38,11 +38,6 @@ char DIRLIST[40] = ".gopher";
 /* name of inheriting config file */
 char INFCONFIG[40] = ".gopher.rec";
 
-/* name of list of external processors */
-#ifndef EXTPROC
-#define EXTPROC ".search"
-#endif
-
 /* dirlist file extension */
 #define DIRLISTEXT "g"
 
@@ -129,6 +124,47 @@ int limit = -1;
 /* the environment received in main() */
 char **genvp;
 
+/* output a single line, then \r\n EOL */
+void outln(const char *str)
+{
+	fputs(str, stdout);
+	fputs("\r\n", stdout);
+}
+
+/* print error message */
+void errormsg(const char *e)
+{
+	printf("3%s\tfake\t(NULL)\t0\r\n.\r\n", e);
+}
+
+/* print info line */
+void infoline(char *str)
+{
+	putchar('i');
+	fputs(str, stdout);
+	outln("\tfake\t(NULL)\t0");
+}
+
+/* append to log */
+void logprintf(const char *format, ...)
+{
+	FILE *fp;
+	va_list ap;
+
+	if(!logfile) return;
+
+	fp = fopen(logfile, "a");
+	if(!fp) {
+		perror("can't open log file");
+		return;
+	}
+
+	va_start(ap, format);
+	vfprintf(fp, format, ap);
+	va_end(ap);
+
+	fclose(fp);
+}
 
 /********************************** path */
 
@@ -323,31 +359,7 @@ char * getalias(const char *name) {
 	}
 }
 
-
-
-
-
-
-/* append to log */
-void logprintf(const char *format, ...)
-{
-	FILE *fp;
-	va_list ap;
-
-	if(!logfile) return;
-
-	fp = fopen(logfile, "a");
-	if(!fp) {
-		perror("can't open log file");
-		return;
-	}
-
-	va_start(ap, format);
-	vfprintf(fp, format, ap);
-	va_end(ap);
-
-	fclose(fp);
-}
+/***********************************************************************/
 
 /* helper functions for directory listing */
 int dirfilter(const struct dirent *a)
@@ -391,30 +403,12 @@ int dirsort(const struct dirent **a, const struct dirent **b)
 	}
 }
 
-/* process external processor's output */
-int managedextern = 0;
-
-/* print error message */
-void errormsg(const char *e)
-{
-	printf("3%s\t\t\t\n.\n", e);
-}
-
-/* print info line */
-void infoline(char *str)
-{
-	putchar('i');
-	fputs(str, stdout);
-	puts("\tfake\t(NULL)\t0");
-}
-
 /* print directory entry */
 void printentry(char *e)
 {
 	struct stat stbuf;
 	char *ext = NULL;
 	node *no;
-	char *ctype = NULL;
 	char menuchar;
 	char *desc;
 	struct tm *mt;
@@ -435,6 +429,11 @@ void printentry(char *e)
 		return;
 	}
 
+	if(!(stbuf.st_mode & S_IROTH)) {
+		/* not readable by all; skip */
+		return;
+	}
+
 	/* determine menu char */
 	if(S_ISDIR(stbuf.st_mode)) {
 		menuchar = '1';
@@ -446,52 +445,50 @@ void printentry(char *e)
 
 			/* images */
 			if(!strcasecmp(ext, "gif")) {
-				menuchar = 'g'; ctype="image/gif";
+				menuchar = 'g';
 			} else if(!strcasecmp(ext, "jpg")) {
-				menuchar = 'I'; ctype="image/jpeg";
+				menuchar = 'I';
 			} else if(!strcasecmp(ext, "jpeg")) {
-				menuchar = 'I'; ctype="image/jpeg";
+				menuchar = 'I';
 			} else if(!strcasecmp(ext, "jpe")) {
-				menuchar = 'I'; ctype="image/jpeg";
+				menuchar = 'I';
 			} else if(!strcasecmp(ext, "png")) {
-				menuchar = 'I'; ctype="image/png";
+				menuchar = 'I';
 			} else if(!strcasecmp(ext, "bmp")) {
-				menuchar = 'I'; ctype="image/x-ms-bmp";
+				menuchar = 'I';
 
 			/* binary formats */
 			} else if(!strcasecmp(ext, "gz")) {
-				menuchar = '9'; ctype="application/x-gtar";
+				menuchar = '9';
 			} else if(!strcasecmp(ext, "tgz")) {
-				menuchar = '9'; ctype="application/x-gtar";
+				menuchar = '9';
 			} else if(!strcasecmp(ext, "tar")) {
-				menuchar = '9'; ctype="application/x-tar";
+				menuchar = '9';
 			} else if(!strcasecmp(ext, "zip")) {
-				menuchar = '9'; ctype="application/zip";
+				menuchar = '9';
 			} else if(!strcasecmp(ext, "pdf")) {
-				menuchar = '9'; ctype="application/pdf";
+				menuchar = '9';
 			} else if(!strcasecmp(ext, "mp4")) {
-				menuchar = '9'; ctype="video/mp4";
+				menuchar = '9';
 			} else if(!strcasecmp(ext, "mpg")) {
-				menuchar = '9'; ctype="video/mpeg";
+				menuchar = '9';
 			} else if(!strcasecmp(ext, "avi")) {
-				menuchar = '9'; ctype="video/x-msvideo";
+				menuchar = '9';
 			} else if(!strcasecmp(ext, "swf")) {
-				menuchar = '9'; ctype="application/x-shockwave-flash";
+				menuchar = '9';
 			} else if(!strcasecmp(ext, "html")) {
-				menuchar = 'h'; ctype="text/html";
+				menuchar = 'h';
 			} else if(!strcasecmp(ext, "htm")) {
-				menuchar = 'h'; ctype="text/html";
+				menuchar = 'h';
 
 			} else if(!strcasecmp(ext, DIRLISTEXT)) {
 				menuchar = '1';
 			} else {
 				menuchar = '0';
-				ctype="text/plain";
 			}
 
 		} else {
 			menuchar = '0';
-			ctype="text/plain";
 		}
 
 	} else {
@@ -504,7 +501,7 @@ void printentry(char *e)
 	/* determine description */
 	desc = getalias(e);
 	if(desc) {
-		if(desc[0] == 0) return;
+		if(desc[0] == 0) return; /* desc aliased to empty; skip */
 	} else {
 		desc = e;
 
@@ -537,7 +534,7 @@ void printentry(char *e)
 			printf("%s/", no->text);
 	}
 
-	printf("%s\t%s\t%d\n", e, servername, serverport);
+	printf("%s\t%s\t%d\r\n", e, servername, serverport);
 
 	if(textsummary > 0 && menuchar == '0') {
 		/* output text summary for plain text file */
@@ -675,13 +672,13 @@ void readdirlist(FILE *fp)
 		switch(buf[0]) {
 			/* verbatim */
 			case ':':
-				puts(buf+1);
+				outln(buf+1);
 				break;
 
 			/* verbatim local link */
 			case '.':
 				fputs(buf+1, stdout);
-				printf("\t%s\t%d\n", servername, serverport);
+				printf("\t%s\t%d\r\n", servername, serverport);
 				break;
 
 			/* local link, with path automatically prepended */
@@ -692,7 +689,7 @@ void readdirlist(FILE *fp)
 					printf("%s\t", buf+1);
 					for(no = path; no; no=no->next)
 						printf("%s/", no->text);
-					printf("%s\t%s\t%d\n", p+1, servername, serverport);
+					printf("%s\t%s\t%d\r\n", p+1, servername, serverport);
 				}
 				break;
 
@@ -749,7 +746,7 @@ void readdirlist(FILE *fp)
 							/* if no serv specified, just do a printentry */
 							if(!strncmp(sel, "URL:", 4)) {
 								/* .. unless it begins with URL: */
-								printf("h%s\t%s\t%s\t%d\n", sel+4, sel, servername, serverport);
+								printf("h%s\t%s\t%s\t%d\r\n", sel+4, sel, servername, serverport);
 							} else printentry(sel);
 						} else {
 							errormsg("known selector, but no info field on nonlocal serv");
@@ -764,7 +761,7 @@ void readdirlist(FILE *fp)
 								printf("%s/", no->text);
 						}
 						if(sel[0] == '/') sel ++;
-						printf("%s\t%s\t%d\n", sel, serv ? serv : servername,
+						printf("%s\t%s\t%d\r\n", sel, serv ? serv : servername,
 							port ? atoi(port) : (serv ? 70 : serverport));
 					}
 				}
@@ -824,6 +821,12 @@ void serve(char *fn)
 		exit(0);
 	}
 
+	if(!(stbuf.st_mode & S_IROTH)) {
+		/* not everyone has read access */
+		errormsg("access denied");
+		exit(0);
+	}
+
 	fp = fopen(fn, "rb");
 	if(!fp) {
 		errormsg("couldn't open file");
@@ -854,7 +857,7 @@ void rundirproc(dirproc *d, char *path)
 {
 	setenv("QUERY", path, 1);
 	if(d->raw) {
-		char *args[3] = { "sh", d->cmd, NULL };
+		char *args[4] = { "sh", "-c", d->cmd, NULL };
 		execv("/bin/sh", args);
 		errormsg("execv failed");
 		exit(0);
@@ -863,126 +866,40 @@ void rundirproc(dirproc *d, char *path)
 	}
 }
 
-/* try to run a search processor */
-void runsearch(char *name, char *search)
-{
-	FILE *fp;
-	FILE *fp2;
-	char buf[REQBUF];
-	char *p, *q;
-	char *args[MAXPROCARG];
-	char *exe;
-	int argc=0;
-	int status;
-	int pfd[2];
-	pid_t cpid;
-
-	fp = fopen(EXTPROC, "r");
-	if(!fp) {
-		errormsg("extern definitions not found");
-		exit(0);
-	}
-
-	/* read .search */
-	while(!feof(fp)) {
-		if(!fgets(buf, REQBUF, fp)) break;
-
-		for(p=buf; *p; p++)
-			if(*p == '\r' || *p == '\n')
-				{ *p = 0; break; }
-
-		p = buf;
-		if(!(q = strchr(p, '\t'))) continue;
-		*q = 0;
-		if(strcmp(p, name)) continue;
-
-		/* found entry, built argument list */
-
-		p=q+1;
-
-		exe = p;
-		args[0] = exe; argc++;
-		while((q = strchr(p, '\t'))) {
-			p = q+1;
-			*q=0;
-
-			args[argc] = p; argc++;
-			if(argc == MAXPROCARG - 2) {
-				errormsg("too many arguments for extern");
-				exit(0);
-			}
-		}
-
-		args[argc] = search; argc++;
-		args[argc] = NULL;
-
-		/* invoke processor */
-
-		if(managedextern) {
-			/* execute managed processor */
-
-			if(pipe(pfd) == -1) {
-				perror("pipe");
-				exit(1);
-			}
-
-			cpid = fork();
-			if(cpid == -1) {
-				perror("fork");
-				exit(1);
-			}
-
-			if(cpid == 0) {
-				/* child */
-				close(pfd[0]); /* close unused read end */
-				close(1); /* close stdout */
-				dup2(pfd[1], 1); /* assign writing end to stdout */
-				execve(exe, args, genvp);
-				errormsg("error running extern");
-				exit(1);
-			} else {
-				/* parent */
-				close(pfd[1]); /* close unused write end */
-
-				fp2 = fdopen(pfd[0], "r");
-				readdirlist(fp2);
-				fclose(fp2);
-
-				waitpid(cpid, &status, WNOHANG);
-				if(!WIFEXITED(status)) {
-					kill(cpid, 9); /* kthxbye */
-				}
-			}
-
-			exit(0);
-
-		} else {
-			/* unmanaged */
-			execve(exe, args, genvp);
-			errormsg("error running extern");
-			exit(1);
-		}
-	}
-
-	fclose(fp);
-	errormsg("extern key not found");
-	exit(0);
-}
-
 /* print a stub for redirecting gopher+ clients to the non-gopher+ menu */
 void gopherplus_stub(char *req)
 {
 	/* this is a direct copy of the gopher.floodgap.com server notice */
-	puts("+-1");
-	printf("+INFO: 1Main menu (non-gopher+)\t\t%s\t%d\n", servername, serverport);
-	puts("+ADMIN:");
-	puts(" Admin: Server Administrator");
-	puts(" Server:");
-	puts("+VIEWS:");
-	puts(" application/gopher+-menu: <512b>");
-	puts("+ABSTRACT:");
-	puts(" This gopher supports standard gopher access only. Use this");
-	puts(" kludge to disable gopher+ client requests by your client.");
+	outln("+-1");
+	printf("+INFO: 1Main menu (non-gopher+)\t\t%s\t%d\r\n", servername, serverport);
+	outln("+ADMIN:");
+	outln(" Admin: Server Administrator");
+	outln(" Server:");
+	outln("+VIEWS:");
+	outln(" application/gopher+-menu: <512b>");
+	outln("+ABSTRACT:");
+	outln(" This gopher supports standard gopher access only. Use this");
+	outln(" kludge to disable gopher+ client requests by your client.");
+}
+
+/* change to a directory; fail if directory is not readable by all */
+void chdir_chk(const char *dir)
+{
+	struct stat stbuf;
+	if(stat(dir, &stbuf)) {
+		errormsg("failed to stat directory");
+		exit(0);
+	}
+
+	if(!(stbuf.st_mode & S_IROTH)) {
+		errormsg("access to directory denied");
+		exit(0);
+	}
+
+	if(chdir(dir)) {
+		errormsg("chdir failed");
+		exit(0);
+	}
 }
 
 /* process request */
@@ -1005,7 +922,7 @@ void procreq(char *request)
 
 		/* set search string in environment
 		 * (for the possibly run external search processor */
-		setenv("search", search, 1);
+		setenv("SEARCH", search, 1);
 	}
 
 	if(!strncmp(req, "URL:", 4)) {
@@ -1054,10 +971,7 @@ void procreq(char *request)
 		if(pathel[0] == 0)
 			continue;
 
-		if(chdir(pathel)) {
-			errormsg("file not found or chdir failed");
-			exit(0);
-		}
+		chdir_chk(pathel);
 
 		/* record path */
 		if(no) {
@@ -1088,17 +1002,6 @@ void procreq(char *request)
 			}
 		}
 
-		if(req[0] == '!' || req[0] == '@') {
-			/* external processor */
-			if(req[0] == '@') managedextern = 1;
-			char *p = strchr(req + 1, '?');
-			if(p) {
-				*p = 0;
-				search = p + 1;
-			}
-			runsearch(req+1, search);
-		}
-
 		if(stat(req, &stbuf)) {
 			errormsg("file not found");
 			exit(0);
@@ -1106,10 +1009,7 @@ void procreq(char *request)
 
 		if(S_ISDIR(stbuf.st_mode)) {
 			/* directory */
-			if(chdir(req)) {
-				errormsg("chdir failed");
-				exit(0);
-			}
+			chdir_chk(req);
 
 			/* record path */
 			if(no) {
@@ -1125,6 +1025,11 @@ void procreq(char *request)
 
 		if(S_ISREG(stbuf.st_mode)) {
 			/* serve file */
+
+			if(!strcmp(req, DIRLIST) || !strcmp(req, INFCONFIG)) {
+				errormsg("access denied");
+				exit(0);
+			}
 
 			char *ext;
 			ext = strrchr(req, '.');
@@ -1201,6 +1106,7 @@ int main(int argc, char *argv[], char *envp[])
 				fprintf(stderr, "-l name: enable logging\n");
 				fprintf(stderr, "-b name: dirlist basename (default .gopher)\n");
 				fprintf(stderr, "-s sel: use this selector instead of reading from stdin\n");
+				fprintf(stderr, "-P peer: specify peer name for incoming connection (for logging)\n");
 				exit(1);
 		}
 	}
@@ -1227,6 +1133,7 @@ int main(int argc, char *argv[], char *envp[])
 	mt = localtime(&tm);
 
 	if(!peer) {
+		/* if peer not specified, try to retrieve info from stdin socket */
 		struct sockaddr_in addr;
 		socklen_t i = sizeof(addr);
 		int r = getpeername(0, (struct sockaddr *) &addr, &i);
@@ -1235,6 +1142,8 @@ int main(int argc, char *argv[], char *envp[])
 		else
 			peer = "unknown";
 	}
+
+	setenv("PEER", peer, 1);
 
 	logprintf("REQ\t%04d-%02d-%02d %02d:%02d:%02d\t%s\t%s\n",
 			mt->tm_year + 1900, mt->tm_mon + 1, mt->tm_mday,
