@@ -1,5 +1,9 @@
-mgod 0.5
-a mini gopher server for inetd
+mgod copyright (C) 2006-2008 Máté Nagy <mnagy@port70.net>
+This software is available under the GNU General Public License (Version 3)
+(a copy of this can be found in the file COPYING).
+
+
+mgod: a mini gopher server for inetd
 
 Mgod can serve a directory structure, taking extra data from hidden files in
 each directory (called .gopher).  It can invoke external scripts or
@@ -214,12 +218,3 @@ To use it, copy httpgate.cfg.h.sample to httpgate.cfg.h, and edit it for
 configuration (such as the path to the mgod executable). Then compile httpgate
 ("make httpgate"). Finally, set up your web server to use the resulting file
 as a CGI.
-
-LICENSE
-
-GPL version 2.
-
-AUTHOR
-
-Mate Nagy <mnagy@port70.net>
-

@@ -1,7 +1,6 @@
-/* mgod 0.5
- * mini gopher server for inetd
- * by Mate Nagy <mnagy@port70.net>
- * GPL VERSION 2
+/* mgod: mini gopher server for inetd
+ * Copyright (C) 2006-2008 Máté Nagy <mnagy@port70.net>
+ * Available under: GPL (version 3), see file "COPYING"
  */
 
 #define _GNU_SOURCE

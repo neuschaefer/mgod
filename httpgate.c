@@ -1,3 +1,8 @@
+/* httpgate: HTTP gateway for mgod
+ * Copyright (C) 2006-2008 Máté Nagy <mnagy@port70.net>
+ * Available under: GPL (version 3), see file "COPYING"
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
