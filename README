@@ -51,10 +51,6 @@ ARGUMENTS
 -r <rootdir>
     Set the root directory of your content (default /var/gopher).
 
--a <adminstring>
-    Set administrator string.
-    Should be like "Name <email>"
-
 -l <logfile>
     Enable logging to a file.
 
