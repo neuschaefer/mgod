@@ -24,6 +24,7 @@ CHANGELOG
   - Removed original support for search processors (now only dirproc-style
     support remains)
   - Check for access permissions (don't serve files/dirs not readable by all)
+  - Better file type classification (by a table defined at the head of the .c)
 
 
 INSTALLING

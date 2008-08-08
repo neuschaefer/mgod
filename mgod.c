@@ -29,9 +29,6 @@
 /* buffer size for file serving */
 #define SERVBUF 2048
 
-/* maximum number of arguments (+1) for external processor */
-#define MAXPROCARG 16
-
 /* name of directory listing config file */
 char DIRLIST[40] = ".gopher";
 
@@ -47,7 +44,23 @@ int serverport = 70;
 char * rootdir = "/var/gopher";
 char * logfile = NULL;
 
+/* file types */
+char *filetypes[] = {
+	/* images */
+	"I", "jpg jpeg jpe png bmp",
+	"g", "gif",
+	/* binary formats */
+	"9", "gz tgz tar zip bz2 rar pdf mid xm mod",
+	";", "avi mp4 mpg",
+	"a", "wav mp3 au",
+	/* html */
+	"h", "htm html swf",
 
+	/* directory list */
+	"1", DIRLISTEXT,
+
+	NULL
+};
 
 /********************************** newhash */
 
@@ -443,50 +456,16 @@ void printentry(char *e)
 		if(ext) {
 			ext++;
 
-			/* images */
-			if(!strcasecmp(ext, "gif")) {
-				menuchar = 'g';
-			} else if(!strcasecmp(ext, "jpg")) {
-				menuchar = 'I';
-			} else if(!strcasecmp(ext, "jpeg")) {
-				menuchar = 'I';
-			} else if(!strcasecmp(ext, "jpe")) {
-				menuchar = 'I';
-			} else if(!strcasecmp(ext, "png")) {
-				menuchar = 'I';
-			} else if(!strcasecmp(ext, "bmp")) {
-				menuchar = 'I';
-
-			/* binary formats */
-			} else if(!strcasecmp(ext, "gz")) {
-				menuchar = '9';
-			} else if(!strcasecmp(ext, "tgz")) {
-				menuchar = '9';
-			} else if(!strcasecmp(ext, "tar")) {
-				menuchar = '9';
-			} else if(!strcasecmp(ext, "zip")) {
-				menuchar = '9';
-			} else if(!strcasecmp(ext, "pdf")) {
-				menuchar = '9';
-			} else if(!strcasecmp(ext, "mp4")) {
-				menuchar = '9';
-			} else if(!strcasecmp(ext, "mpg")) {
-				menuchar = '9';
-			} else if(!strcasecmp(ext, "avi")) {
-				menuchar = '9';
-			} else if(!strcasecmp(ext, "swf")) {
-				menuchar = '9';
-			} else if(!strcasecmp(ext, "html")) {
-				menuchar = 'h';
-			} else if(!strcasecmp(ext, "htm")) {
-				menuchar = 'h';
-
-			} else if(!strcasecmp(ext, DIRLISTEXT)) {
-				menuchar = '1';
-			} else {
-				menuchar = '0';
+			char **ft = filetypes;
+			for(; *ft; ft ++) {
+				char mch = *ft[0]; ft++;
+				if(strcasestr(*ft, ext)) {
+					menuchar = mch;
+					break;
+				}
 			}
 
+			if(!(*ft)) menuchar = '0';
 		} else {
 			menuchar = '0';
 		}
@@ -506,9 +485,9 @@ void printentry(char *e)
 		desc = e;
 
 		/* cut off .g from extension */
-		if(menuchar == '1' && ext && !strcasecmp(ext, "g")) {
+		if(menuchar == '1' && ext && !strcasecmp(ext, DIRLISTEXT)) {
 			dotg = 1;
-			ext --;
+			ext -= strlen(DIRLISTEXT);
 			*ext = 0;
 		}
 	}
