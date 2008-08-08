@@ -57,7 +57,7 @@ char *filetypes[] = {
 	"h", ".htm.html.swf.",
 
 	/* directory list */
-	"1", DIRLISTEXT,
+	"1", "." DIRLISTEXT ".",
 
 	NULL
 };
@@ -471,7 +471,6 @@ void printentry(char *e)
 				}
 
 				if(!(*ft)) menuchar = '0';
-
 			}
 
 			ext ++; // skip dot
