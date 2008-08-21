@@ -853,6 +853,22 @@ void rundirproc(dirproc *d, char *path)
 	}
 }
 
+/* print a stub for redirecting gopher+ clients to the non-gopher+ menu */
+void gopherplus_stub(char *req)
+{
+	/* this is a direct copy of the gopher.floodgap.com server notice */
+	outln("+-1");
+	printf("+INFO: 1Main menu (non-gopher+)\t\t%s\t%d\r\n", servername, serverport);
+	outln("+ADMIN:");
+	outln(" Admin: Server Administrator");
+	outln(" Server:");
+	outln("+VIEWS:");
+	outln(" application/gopher+-menu: <512b>");
+	outln("+ABSTRACT:");
+	outln(" This gopher supports standard gopher access only. Use this");
+	outln(" kludge to disable gopher+ client requests by your client.");
+}
+
 /* change to a directory; fail if directory is not readable by all */
 void chdir_chk(const char *dir)
 {
@@ -884,6 +900,13 @@ void procreq(char *request)
 	char *req = strsep(&request, "\t");
 	char *search = strsep(&request, "\t");
 	if(search) {
+		/* search string is specified */
+		if(!strcmp(search, "$")) {
+			/* gopher+ menu attempted, print gopher+ redirect */
+			gopherplus_stub(req);
+			exit(0);
+		}
+
 		/* set search string in environment
 		 * (for the possibly run external search processor */
 		setenv("SEARCH", search, 1);
