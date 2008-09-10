@@ -10,9 +10,14 @@ each directory (called .gopher).  It can invoke external scripts or
 executables for search string processing.
 
 Gopher+ used to be supported, but support was eventually removed.
+Gopher+ requests for the root menu result in a "trampoline" menu that tells
+the client to use the plain gopher protocol.
 
 
 CHANGELOG
+
+SVN:
+  - added support for . and .. in relative links
 
 1.0:
   - license changed to GPL v3
@@ -95,6 +100,9 @@ For local lines, if the selector doesn't begin with '/' or 'URL:', the
 current path is prepended. If the selector begins with '/', it is considered
 an absolute path (current path is not prepended, but the beginning '/' is
 cut off).
+
+In relative links, "." and ".." elements are supported and resolved.
+Absolute links are not processed this way.
 
 If the info field is empty, but the selector is specified, the directory entry
 printing mechanism is invoked on the selector (unless it begins with 'URL:',

@@ -640,12 +640,78 @@ void speccmd(char *cmd)
 	}
 }
 
+/* print full version of link relative to current path */
+void printrellink(const char *link)
+{
+	node *no;
+	int sp = 0;
+	/* allocate enough space for full path + link string */
+	for(no = path; no; no=no->next)
+		sp += strlen(no->text) + 1;
+	sp += strlen(link) + 1;
+
+	char *buf = (char *) alloca(sp);
+	buf[0] = 0;
+	char *end = buf; // keep a pointer to the end of the buffer
+
+	/* append to the end of buffer */
+	inline void pathadd(const char *x, const char *until)
+	{
+		const char *c;
+		for(c = x; c != until && *c; c++)
+			*end++ = *c;
+		*end = 0;
+	}
+
+	/* append to the end of buffer
+	 * add '/' if necessary */
+	inline void pathaddel(const char *x, const char *until)
+	{
+		if(end > buf) pathadd("/", NULL);
+		pathadd(x, until);
+	}
+
+	/* remove until last / */
+	inline void pathup()
+	{
+		char *c;
+		for(c = end; c > buf && *c != '/'; c --);
+		end = c;
+		*end = 0;
+	}
+
+	/* copy current path to buffer */
+	for(no = path; no; no=no->next) {
+		if(no != path) pathadd("/", NULL);
+		pathadd(no->text, NULL);
+	}
+
+	/* build path element by element */
+	const char *p = link;
+	const char *nd;
+	for(p = link; *p; p = nd + 1) {
+		nd = strchr(p, '/');
+		if(nd) {
+			if(!strncmp(".", p, nd - p)) continue;
+			else if(!strncmp("..", p, nd - p)) pathup();
+			else pathaddel(p, nd);
+		} else {
+			if(!strcmp(".", p)) continue;
+			else if(!strcmp("..", p)) pathup();
+			else pathaddel(p, NULL);
+			break;
+		}
+	}
+
+	/* print result */
+	fputs(buf, stdout);
+}
+
 /* process configuration file */
 void readdirlist(FILE *fp)
 {
 	char buf[REQBUF];
 	char *p;
-	node *no;
 
 	while(!feof(fp)) {
 		if(!fgets(buf, REQBUF, fp)) break;
@@ -674,9 +740,8 @@ void readdirlist(FILE *fp)
 				if(p) {
 					*p = 0;
 					printf("%s\t", buf+1);
-					for(no = path; no; no=no->next)
-						printf("%s/", no->text);
-					printf("%s\t%s\t%d\r\n", p+1, servername, serverport);
+					printrellink(p+1);
+					printf("\t%s\t%d\r\n", servername, serverport);
 				}
 				break;
 
@@ -744,11 +809,13 @@ void readdirlist(FILE *fp)
 
 						if(!serv && sel[0] != '/' && strncmp(sel, "URL:", 4)) {
 							/* selector is relative and serv is local, print path */
-							for(no = path; no; no=no->next)
-								printf("%s/", no->text);
+							printrellink(sel);
+						} else {
+							/* print selector verbatim */
+							if(sel[0] == '/') sel ++;
+							fputs(sel, stdout);
 						}
-						if(sel[0] == '/') sel ++;
-						printf("%s\t%s\t%d\r\n", sel, serv ? serv : servername,
+						printf("\t%s\t%d\r\n", serv ? serv : servername,
 							port ? atoi(port) : (serv ? 70 : serverport));
 					}
 				}
