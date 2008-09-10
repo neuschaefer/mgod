@@ -36,13 +36,16 @@ FILE *run_mgod(char *selector)
 
 		/* modify arglist to have selector */
 		char **a = mgod_args;
-		while(a[1]) a++;
+		while(a[3]) a++;
 
 		if(search) {
 			*a = (char *) malloc(strlen(selector) + strlen(search) + 2);
 			if(!*a) abort();
 			sprintf(*a, "%s\t%s", selector, search);
 		} else *a = selector;
+
+		a[2] = getenv("REMOTE_ADDR");
+		if(!a[2]) a[2] = "unknown";
 
 		/* run mgod */
 		execv(mgod_exec, mgod_args);

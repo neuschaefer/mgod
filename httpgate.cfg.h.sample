@@ -1,8 +1,9 @@
 char *mgod_exec = "/path/to/mgod";
-char *home_server = "hactar.net";
+char *home_server = "server.host";
 char *home_port = "70";
 
-/* last 3 has to be "-s" "" NULL */
-char *mgod_args[] = { NULL, "-n", "hactar.net", "-r", "/path/to/gopher/root", "-l", "/path/to/gopher/log", "-s", "", NULL };
+/* last 5 have to be "-s" "" "-P" "" NULL */
+char *mgod_args[] = { NULL, "-n", "server.host", "-r", "/path/to/gopher/root", "-l", "/path/to/gopher/log",
+	"-s", "", "-P", "", NULL };
 
-char *urlbase = "http://localhost/kz/httpgate.cgi";
+char *urlbase = "http://localhost/cgi/httpgate.cgi";
