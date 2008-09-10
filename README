@@ -19,6 +19,7 @@ CHANGELOG
 
 SVN:
   - added support for . and .. in relative links
+  - better logging through httpgate
 
 1.0:
   - license changed to GPL v3
