@@ -1202,7 +1202,7 @@ int main(int argc, char *argv[], char *envp[])
 	logprintf("REQ\t%04d-%02d-%02d %02d:%02d:%02d\t%s\t%s\n",
 			mt->tm_year + 1900, mt->tm_mon + 1, mt->tm_mday,
 			mt->tm_hour, mt->tm_min, mt->tm_sec, peer,
-			buf);
+			sel);
 
 	genvp = envp;
 	procreq(sel);
