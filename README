@@ -1,6 +1,7 @@
 mgod copyright (C) 2006-2008 Máté Nagy <mnagy@port70.net>
 This software is available under the GNU General Public License (Version 3)
 (a copy of which can be found in the file COPYING).
+ -> gopher://port70.net/1mgod
 
 
 mgod: a mini gopher server for inetd

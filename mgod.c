@@ -1,6 +1,7 @@
 /* mgod: mini gopher server for inetd
  * Copyright (C) 2006-2008 Máté Nagy <mnagy@port70.net>
  * Available under: GPL (version 3), see file "COPYING"
+ *  -> gopher://port70.net/1mgod
  */
 
 #define _GNU_SOURCE
@@ -133,9 +134,6 @@ u4 hash(k, length, initval)
 
 /* maximum number of directory list entries to print */
 int limit = -1;
-
-/* the environment received in main() */
-char **genvp;
 
 /* output a single line, then \r\n EOL */
 void outln(const char *str)
@@ -1204,7 +1202,6 @@ int main(int argc, char *argv[], char *envp[])
 			mt->tm_hour, mt->tm_min, mt->tm_sec, peer,
 			sel);
 
-	genvp = envp;
 	procreq(sel);
 	return 0;
 }
