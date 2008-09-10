@@ -5,9 +5,16 @@
   (require (planet "aif.ss" ("schematics" "macro.plt" 1)))
   (require (lib "dns" "net"))
 
+  (define *places* 25)
+
   (define selector-hash (make-hash-table 'equal))
   (define ip-hash (make-hash-table 'equal))
   (define month-hash (make-hash-table 'equal))
+  (define toplevel-hash (make-hash-table 'equal))
+
+  (define regex-date (pregexp "(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}):(\\d{2}):(\\d{2})"))
+  (define regex-toplevel (pregexp "([^/]*).*"))
+  (define regex-tab (pregexp "\t"))
 
   (define-struct month-entry (hits days))
 
@@ -24,9 +31,9 @@
               (set-month-entry-hits!
                 ent (+ 1 (month-entry-hits ent)))
               (vector-set!
-                (month-entry-days ent) (string->number day)
+                (month-entry-days ent) (- (string->number day) 1)
                 (vector-ref
-                  (month-entry-days ent) (string->number day))))
+                  (month-entry-days ent) (- (string->number day) 1))))
             (begin
               (hash-table-put!
                 month-hash monthspec
@@ -37,13 +44,14 @@
                     v))))))
 
         (hashinc! selector-hash selector)
+        (hashinc! toplevel-hash (pregexp-replace regex-toplevel selector "\\1"))
         (hashinc! ip-hash ip))
-      (cdr (pregexp-match "(\\d{4})-(\\d{2})-(\\d{2}) (\\d{2}):(\\d{2}):(\\d{2})" date))))
+      (cdr (pregexp-match regex-date date))))
 
   (define (nextline)
     (let ((l (read-line)))
       (when (not (eof-object? l))
-        (apply processline (pregexp-split "\t" l))
+        (apply processline (pregexp-split regex-tab l))
         (nextline))))
 
   (define (hash-top hash n)
@@ -104,6 +112,9 @@
            (s1:iota (length top))
            top)))
 
+  (define (host-name n)
+    (pregexp-replace "^::ffff:" n ""))
+
   (nextline)
 
   (display "\nMonthly hits:\n")
@@ -120,21 +131,26 @@
            (hash-table-map month-hash (lambda (k v) k)))))
 
   (display "\nTop selectors:\n")
-  (place-table (hash-top selector-hash 20))
+  (place-table (hash-top selector-hash *places*))
+
+  (display "\nToplevels:\n")
+  (place-table (hash-top toplevel-hash 10))
+
   (display "\nTop hosts:\n")
 
   (let ((dns (dns-find-nameserver))
-        (top (hash-top ip-hash 20)))
+        (top (hash-top ip-hash *places*)))
     (table-print
       '(r r l l)
       (map (lambda (place row)
-             (list (string-append (number->string (+ 1 place)) ".")
-                   (number->string (cdr row))
-                   (car row)
-                   (with-handlers
-                     ((exn? (lambda (exn) "?")))
-                     (sleep 0.1)
-                     (dns-get-name dns (car row)))))
+             (let ((name (host-name (car row))))
+               (list (string-append (number->string (+ 1 place)) ".")
+                     (number->string (cdr row))
+                     name
+                     (with-handlers
+                       ((exn? (lambda (exn) "?")))
+                       (sleep 0.2)
+                       (dns-get-name dns name)))))
            (s1:iota (length top))
            top)))
   )
