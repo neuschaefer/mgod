@@ -53,7 +53,7 @@ char *filetypes[] = {
 	/* binary formats */
 	"9", ".gz.tgz.tar.zip.bz2.rar.pdf.mid.xm.mod.",
 	";", ".avi.mp4.mpg.",
-	"a", ".wav.mp3.au.",
+	"s", ".wav.mp3.au.ogg.",
 	/* html */
 	"h", ".htm.html.swf.",
 
