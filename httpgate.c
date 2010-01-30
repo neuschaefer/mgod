@@ -437,6 +437,20 @@ void do_file(char type, char *sel)
 			mime = "application/x-tar";
 		else if(hasext(sel, ".zip"))
 			mime = "application/zip";
+		else if(hasext(sel, ".doc"))
+			mime = "application/msword";
+		else if(hasext(sel, ".xls"))
+			mime = "application/vnd.ms-excel";
+		else if(hasext(sel, ".xlsx"))
+			mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+		else if(hasext(sel, ".rar"))
+			mime = "application/rar";
+		else if(hasext(sel, ".docx"))
+			mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+		else if(hasext(sel, ".pdf"))
+			mime = "application/pdf";
+		else if(hasext(sel, ".ppt"))
+			mime = "application/vnd.ms-powerpoint";
 
 		break;
 	}
