@@ -415,7 +415,6 @@ void do_file(char type, char *sel)
 	char *mime = "application/octet-stream";
 
 	switch(type) {
-	case '0': mime = "text/plain"; break;
 	case 'h': mime = "text/html"; break;
 	case 'g': mime = "image/gif"; break;
 	case 'I':
@@ -427,6 +426,9 @@ void do_file(char type, char *sel)
 			mime = "image/x-ms-bmp";
 		else
 			mime = "image/png";
+		break;
+
+	case '0': mime = "text/plain";
 	
 	default:
 		if(hasext(sel, ".tar.gz"))
