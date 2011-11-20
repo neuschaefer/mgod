@@ -306,15 +306,29 @@ void row_url(char type, char *desc, char *url)
 	}
 }
 
+/* return last component of filename */
+char * final_component(char *sel)
+{
+	char *sep = strrchr(sel, '/');
+	if(sep == NULL) return sel; else return sep + 1;
+}
+
 /* output a directory list for a selector */
 void do_dirlist(char type, char *sel)
 {
 	char line[512];
 
-	if(rss)
+	if(rss) {
+		printf("Content-Disposition: inline; filename*=");
+		urlprint(final_component(sel));
+		printf(".xml\n");
 		printf("Content-type: application/rss+xml\n\n");
-	else
+	} else {
+		printf("Content-Disposition: inline; filename*=");
+		urlprint(final_component(sel));
+		printf(".html\n");
 		printf("Content-type: text/html\n\n");
+	}
 
 	FILE *fp = run_mgod(sel);
 	if(!fp) {
@@ -453,10 +467,15 @@ void do_file(char type, char *sel)
 			mime = "application/pdf";
 		else if(hasext(sel, ".ppt"))
 			mime = "application/vnd.ms-powerpoint";
+		else if(hasext(sel, ".tif"))
+			mime = "image/tiff";
 
 		break;
 	}
 
+	printf("Content-Disposition: inline; filename*=");
+	urlprint(final_component(sel));
+	printf("\n");
 	printf("Content-type: %s\n\n", mime);
 
 	char buf[2048];
