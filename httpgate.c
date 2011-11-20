@@ -322,12 +322,12 @@ void do_dirlist(char type, char *sel)
 		printf("Content-Disposition: inline; filename*=");
 		urlprint(final_component(sel));
 		printf(".xml\n");
-		printf("Content-type: application/rss+xml\n\n");
+		printf("Content-type: application/rss+xml; charset=utf-8\n\n");
 	} else {
 		printf("Content-Disposition: inline; filename*=");
 		urlprint(final_component(sel));
 		printf(".html\n");
-		printf("Content-type: text/html\n\n");
+		printf("Content-type: text/html; charset=utf-8\n\n");
 	}
 
 	FILE *fp = run_mgod(sel);
@@ -395,7 +395,7 @@ void do_dirlist(char type, char *sel)
 /* ask for search string */
 void do_searchform(char *sel)
 {
-	printf("Content-type: text/html\n\n");
+	printf("Content-type: text/html; charset=utf-8\n\n");
 	dirlist_head('7', sel, NULL, "onload=\"document.f.search.focus();\"");
 
 	printf("Please enter search string:\n");
@@ -421,7 +421,7 @@ void do_file(char type, char *sel)
 {
 	FILE *fp = run_mgod(sel);
 	if(!fp) {
-		printf("Content-type: text/html\n\n");
+		printf("Content-type: text/html; charset=utf-8\n\n");
 		html_error("Failed to run mgod");
 		return;
 	}
