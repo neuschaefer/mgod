@@ -201,10 +201,10 @@ void dirlist_head(char type, char *sel, char *srch, char *body)
 		if(sel[0]) {
 			char *lastsep = strrchr(sel, '/');
 			if(lastsep == NULL) {
-				printf("<a href=\"?1\">");
+				printf("<a data-ajax=\"false\" href=\"?1\">");
 			} else {
 				*lastsep = 0;
-				printf("<a href=\"?1");
+				printf("<a data-ajax=\"false\" href=\"?1");
 				urlprint(sel);
 				printf("\">");
 				*lastsep = '/';
