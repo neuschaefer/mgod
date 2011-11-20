@@ -17,6 +17,20 @@
 char *search = NULL;
 int rss = 0;
 int rssgopher = 0;
+int in_listview = 0;
+
+#ifndef JQUERY_PAGER
+#define JQUERY_PAGER 50
+#endif
+
+int links_on_page = JQUERY_PAGER;
+int skip_links = 0;
+
+#ifdef JQUERY
+int jquery = 1;
+#else
+int jquery = 0;
+#endif
 
 /* run mgod using a selector, return file descriptor to read output from */
 FILE *run_mgod(char *selector)
@@ -66,7 +80,7 @@ void html_error(char *msg)
 }
 
 /* print html-escaped string */
-void htmlprint(char *s)
+char * htmlprint(char *s)
 {
 	char *p;
 	for(p = s; *p; p++) {
@@ -83,6 +97,7 @@ void htmlprint(char *s)
 			putchar(*p);
 		}
 	}
+	return p;
 }
 
 /* print url-escaped string */
@@ -122,6 +137,22 @@ void urldecode(char *s)
 	*h++ = 0;
 }
 
+/* jquery mode - begin listview if needed */
+void begin_listview()
+{
+	if(in_listview) return;
+	printf("<ul data-role=\"listview\" data-inset=\"true\">\n");
+	in_listview = 1;
+}
+
+/* jquery mode - end listview if needed */
+void end_listview()
+{
+	if(!in_listview) return;
+	printf("</ul>\n");
+	in_listview = 0;
+}
+
 /* print dirlist header */
 void dirlist_head(char type, char *sel, char *srch, char *body)
 {
@@ -148,6 +179,55 @@ void dirlist_head(char type, char *sel, char *srch, char *body)
 		}
 		printf("</link>");
 		printf("<generator>mgod httpgate</generator>\n");
+	} else if(jquery) {
+		printf("<!DOCTYPE html>\n");
+		printf("<html>\n");
+		printf("<head>\n");
+		printf("<title>Gopher: ");
+		htmlprint(sel);
+		printf("</title>");
+		printf("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
+		printf("<link rel=\"stylesheet\" href=\"http://port70.net/~kzed/httpgate/1.0.css\" />\n");
+		printf("<script type=\"text/javascript\" src=\"http://code.jquery.com/jquery-1.6.4.min.js\"></script>\n");
+		printf("<script type=\"text/javascript\" src=\"http://port70.net/~kzed/httpgate/1.0.js\"></script>\n");
+		printf("<script type=\"text/javascript\" src=\"http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js\"></script>\n");
+		printf("</head>\n<body %s>\n", body ? body : "");
+
+		printf("<div data-role=\"page\">\n");
+		printf("<div data-role=\"header\">\n");
+
+		//urlprint(sel);
+		printf("<h1>");
+		if(sel[0]) {
+			char *lastsep = strrchr(sel, '/');
+			if(lastsep == NULL) {
+				printf("<a href=\"?1\">");
+			} else {
+				*lastsep = 0;
+				printf("<a href=\"?1");
+				urlprint(sel);
+				printf("\">");
+				*lastsep = '/';
+			}
+			htmlprint(sel);
+			printf("</a>");
+		} else {
+			printf("%s", home_server);
+		}
+
+		if(srch) {
+			printf(" (");
+			htmlprint(srch);
+			printf(")");
+		}
+
+		printf("</h1>");
+
+		printf("</h1></div><!-- /header -->\n");
+
+		printf("<div data-role=\"content\">\n");
+		printf("<div class=\"pager\">pager</div>\n");
+
 	} else {
 		printf("<html>\n");
 		printf("<head>\n");
@@ -173,21 +253,41 @@ void dirlist_head(char type, char *sel, char *srch, char *body)
 }
 
 /* print dirlist footer */
-void dirlist_foot(char type, char *sel, char *srch)
+void dirlist_foot(char type, char *sel, char *srch, int disp_links)
 {
 	if(rss) {
 		printf("</channel></rss>");
+	} else if(jquery) {
+		end_listview();
+		printf("<div class=\"pager\">pager</div>\n");
+		printf("</div><!-- /content -->\n");
+
+		if(srch == NULL && (skip_links != 0 || disp_links > links_on_page)) {
+			int pages = 1 + ((skip_links + disp_links - 1) / links_on_page);
+			int curpg = (skip_links / links_on_page);
+			printf("<script type=\"text/javascript\">setPager(%d, %d, %d, '", curpg, pages, links_on_page);
+			urlprint(sel);
+			printf("')</script>\n");
+		}
+
+		printf("</div><!-- /page -->\n");
+		printf("</body></html>\n");
 	} else {
 		printf("</pre>\n<hr>");
 		printf("<a href=\"gopher://port70.net/1mgod\">mgod httpgate</a>");
-		printf("</body></html>");
+		printf("</body></html>\n");
 	}
 }
 
 /* print info row */
 void row_info(char *desc)
 {
-	if(!rss) {
+	if(jquery) {
+		end_listview();
+		printf("<p>");
+		htmlprint(desc);
+		printf("</p>");
+	} else if(!rss) {
 		htmlprint(desc);
 		putchar('\n');
 	}
@@ -196,7 +296,12 @@ void row_info(char *desc)
 /* print error row */
 void row_error(char *desc)
 {
-	if(!rss) {
+	if(jquery) {
+		end_listview();
+		printf("<p>");
+		htmlprint(desc);
+		printf("</p>");
+	} else if(!rss) {
 		printf("<b>!! ");
 		htmlprint(desc);
 		printf("</b>\n");
@@ -222,7 +327,26 @@ void typeprefix(char type)
 /* print home link row */
 void row_homelink(char type, char *desc, char *sel)
 {
-	if(rss) {
+	if(jquery) {
+		begin_listview();
+		printf("<li");
+		if(type == '1')
+			printf(" data-theme=\"b\">");
+		else
+			printf(">");
+		printf("<a href=\"?%c", type);
+		urlprint(sel);
+		//htmlprint(sel);
+		if(type == '1' || type == '7') {
+			printf("\">");
+		} else {
+			printf("\" target=\"new\" data-ajax=\"false\">");
+		}
+		typeprefix(type);
+		printf(" ");
+		htmlprint(desc);
+		printf("</a>\n");
+	} else if(rss) {
 		printf("<item><title>");
 		htmlprint(desc);
 		printf("</title>");
@@ -255,7 +379,22 @@ void row_homelink(char type, char *desc, char *sel)
 /* print external link row */
 void row_extlink(char type, char *desc, char *sel, char *host, char *port)
 {
-	if(rss) {
+	if(jquery) {
+		begin_listview();
+		printf("<li>");
+		printf("<a href=\"gopher://");
+		htmlprint(host);
+		if(strcmp(port, "70")) {
+			putchar(':');
+			htmlprint(port);
+		}
+		printf("/%c", type);
+		urlprint(sel);
+//		htmlprint(sel);
+		printf("\" rel=\"external\" >");
+		htmlprint(desc);
+		printf("</a>\n");
+	} else if(rss) {
 		printf("<item><title>");
 		htmlprint(desc);
 		printf("</title>");
@@ -289,7 +428,16 @@ void row_extlink(char type, char *desc, char *sel, char *host, char *port)
 /* print url redirect */
 void row_url(char type, char *desc, char *url)
 {
-	if(rss) {
+	if(jquery) {
+		begin_listview();
+		printf("<li>");
+		printf("<a href=\"");
+	//	urlprint(url);
+		htmlprint(url);
+		printf("\" rel=\"external\" >");
+		htmlprint(desc);
+		printf("</a>\n");
+	} else if(rss) {
 		printf("<item><title>");
 		htmlprint(desc);
 		printf("</title><link>");
@@ -317,6 +465,8 @@ char * final_component(char *sel)
 void do_dirlist(char type, char *sel)
 {
 	char line[512];
+	int disp_links = 0;
+	int links_to_skip = skip_links;
 
 	if(rss) {
 		printf("Content-Disposition: inline; filename*=");
@@ -375,6 +525,18 @@ void do_dirlist(char type, char *sel)
 		char *port = grab();
 		if(!port) continue;
 
+		if(jquery) {
+			if(search == NULL) {
+				if(links_to_skip > 0) {
+					if(type != 'i' && type != '3') links_to_skip --;
+					continue;
+				}
+
+				if(type != 'i' && type != '3') disp_links ++;
+				if(disp_links > links_on_page) continue;
+			}
+		}
+
 		if(type == 'i')
 			row_info(desc);
 		else if(type == '3')
@@ -387,7 +549,7 @@ void do_dirlist(char type, char *sel)
 			row_extlink(type, desc, s, host, port);
 	}
 
-	dirlist_foot(type, sel, search);
+	dirlist_foot(type, sel, search, disp_links);
 
 	fclose(fp);
 }
@@ -404,7 +566,7 @@ void do_searchform(char *sel)
 	printf("\"><input name=\"search\" size=\"40\">\n");
 	printf("<input type=\"submit\" value=\"Search\"></form>");
 
-	dirlist_foot('7', sel, NULL);
+	dirlist_foot('7', sel, NULL, 0);
 }
 
 /* check for string extension */
@@ -442,8 +604,12 @@ void do_file(char type, char *sel)
 			mime = "image/png";
 		break;
 
-	case '0': mime = "text/plain";
-	
+	case '0':
+		if(jquery)
+			mime = "text/html; charset=utf-8";
+		else 
+			mime = "text/plain";
+
 	default:
 		if(hasext(sel, ".tar.gz"))
 			mime = "application/x-gtar";
@@ -478,10 +644,51 @@ void do_file(char type, char *sel)
 	printf("\n");
 	printf("Content-type: %s\n\n", mime);
 
-	char buf[2048];
-	int res;
-	while((res = fread(buf, 1, 2048, fp)) > 0) {
-		if(fwrite(buf, 1, res, stdout) != res) break;
+	if(jquery && type == '0') {
+		printf("<!DOCTYPE html>\n");
+		printf("<html>\n");
+		printf("<head>\n");
+		printf("<title>Gopher: ");
+		htmlprint(sel);
+		printf("</title>");
+		printf("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
+		printf("<link rel=\"stylesheet\" href=\"http://port70.net/~kzed/httpgate/1.0.css\" />\n");
+		printf("<script type=\"text/javascript\" src=\"http://code.jquery.com/jquery-1.6.4.min.js\"></script>\n");
+		printf("<script type=\"text/javascript\" src=\"http://port70.net/~kzed/httpgate/1.0.js\"></script>\n");
+		printf("<script type=\"text/javascript\" src=\"http://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js\"></script>\n");
+		printf("</head>\n<body>\n");
+
+		printf("<div data-role=\"page\">\n");
+		printf("<div data-role=\"header\">\n");
+
+		//urlprint(sel);
+		printf("<h1>");
+		htmlprint(sel);
+		printf("</h1>");
+
+		printf("</h1></div><!-- /header -->\n");
+
+		printf("<div data-role=\"content\">\n<p>\n");
+		char buf[512];
+		char *line;
+		while((line = fgets(buf, 512, fp))) {
+			char *last = htmlprint(line);
+			if(last > line) {
+				if(*(last-1) == '\n') {
+					printf("<br>");
+				}
+			}
+		}
+		printf("</p>\n");
+		printf("</div><!-- /content -->\n");
+		printf("</div><!-- /page -->\n");
+		printf("</body></html>\n");
+	} else {
+		char buf[2048];
+		int res;
+		while((res = fread(buf, 1, 2048, fp)) > 0) {
+			if(fwrite(buf, 1, res, stdout) != res) break;
+		}
 	}
 
 	fclose(fp);
@@ -545,6 +752,14 @@ int main(int argc, char *argv[])
 		/* interpret query string as selector */
 		sel = q+1;
 		type = q[0];
+
+		char *colon = strrchr(sel, ':');
+		if(colon != NULL) {
+			*colon = 0;
+			skip_links = atoi(colon + 1);
+			if(skip_links < 0) skip_links = 0;
+		}
+
 		urldecode(sel);
 	}
 
