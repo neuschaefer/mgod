@@ -699,7 +699,7 @@ int main(int argc, char *argv[])
 	mgod_args[0] = mgod_exec;
 
 	char *q = getenv("QUERY_STRING");
-	if(!q) return 0;
+	if(!q) q = "";
 
 	char *sel;
 	char type;
