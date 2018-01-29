@@ -1,4 +1,4 @@
-mgod copyright (C) 2006-2008 Máté Nagy <mnagy@port70.net>
+mgod copyright (C) 2006-2018 Máté Nagy <mnagy@port70.net>
 This software is available under the GNU General Public License (Version 3)
 (a copy of which can be found in the file COPYING).
  -> gopher://port70.net/1mgod
@@ -28,6 +28,9 @@ SVN:
     support remains)
   - Check for access permissions (don't serve files/dirs not readable by all)
   - Better file type classification (by a table defined at the head of the .c)
+
+1.1:
+  - Bug fix for files with 7-character long extensions provided by Jonathan Neuschäfer
 
 
 INSTALLING
