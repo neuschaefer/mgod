@@ -839,7 +839,7 @@ void dirlist()
 
 	/* generate directory listing */
 	if(genlist) {
-		n = scandir(".", &namelist, dirfilter, (int (*) (const struct dirent **, const struct dirent **) ) dirsort);
+		n = scandir(".", &namelist, dirfilter, dirsort);
 		if(n < 0) {
 			perror("scandir");
 			exit(1);
